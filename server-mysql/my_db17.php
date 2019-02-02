@@ -7,7 +7,7 @@ $dnes = Date("y/").Date("m/").Date("d/").Date(" H:").Date("i");
 
 $databaze = "SECRET";
 $uzivatel = "SECRET";
-$datpassw = "SECRET"; //u2Edveh4";
+$datpassw = "SECRET";
 $hostname = "SECRET.com";	
-//echo "Databﬂze connect:<BR>\n ";
+//echo "Datab√üze connect:<BR>\n ";
 ?>
