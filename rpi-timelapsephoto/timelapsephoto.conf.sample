@@ -1,0 +1,21 @@
+# URL where to upload
+UPLOAD_URL=https://example.com/upl.php
+
+# Upload key
+UPLOAD_KEY=change_me
+
+# Extra parameters for CURL
+# -k for skip SSL certificate verification - usefull for testing on self-signed cert
+# UPLOAD_CURL_EXTRA_PARAMS=
+
+# Picture resolution
+CAM_RESOLUTION=800x600
+
+# Font used in font name:size
+#CAM_FONT="DejavuSans:22"
+
+# Colour of bottom info banner
+# CAM_BANNER_COLOUR=#AARRGGBB
+
+# Optional extra text
+# CAM_INFO_TEXT=

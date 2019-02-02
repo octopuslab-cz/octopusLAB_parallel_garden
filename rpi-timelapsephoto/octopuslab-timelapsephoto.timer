@@ -1,0 +1,8 @@
+[Unit]
+Description=OctopusLAB Photoservice timer
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+
+[Install]
+WantedBy=timers.target
