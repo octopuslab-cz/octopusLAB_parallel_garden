@@ -9,5 +9,5 @@ $databaze = "SECRET";
 $uzivatel = "SECRET";
 $datpassw = "SECRET";
 $hostname = "SECRET.com";	
-//echo "Databßze connect:<BR>\n ";
+//echo "Db connect:<BR>\n ";
 ?>
