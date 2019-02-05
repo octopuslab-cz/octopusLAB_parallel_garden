@@ -15,19 +15,22 @@ import framebuf
 import math
 
 from lib import ssd1306
-from lib.temperature import TemperatureSensor
+from onewire import OneWire
+from ds18x20 import DS18X20
 from lib.bh1750 import BH1750
+from lib.tsl2561 import TSL2561
 from util.buzzer import beep
 from util.led import blink
 from util.display_segment import *
 from assets.icons9x9 import ICON_clr, ICON_wifi
+
 from util.pinout import set_pinout
 
-ver = "0.22/2019"
+ver = "0.23/2019"
 print("sensor_log.py - version: " + ver)
 
 Debug = True
-place = "PP1" # name group of IoT
+place = "OL-DEV" # name group of IoT
 minute = 10 # 1/10 for data send
 #--- setup ---
 isTemp = True
@@ -37,17 +40,38 @@ isPressure = False
 isAD = False #TODO
 isPH = False #TODO
 
+# Defaults
+tslLight = False
+bhLight = False
+bh2Light = False
+
 pinout = set_pinout()
 led = Pin(pinout.BUILT_IN_LED, Pin.OUT) # BUILT_IN_LED
 #moisture
 pwM = Pin(pinout.PWM1_PIN, Pin.OUT)
 pin_an = Pin(pinout.I35_PIN, Pin.IN)
 adcM = adc = machine.ADC(pin_an)
+dspin = machine.Pin(pinout.ONE_WIRE_PIN)
 
-
-if Debug: print("init i2c oled >")
+if Debug: print("init i2c >")
 i2c = machine.I2C(-1, machine.Pin(pinout.I2C_SCL_PIN), machine.Pin(pinout.I2C_SDA_PIN))
-oled = ssd1306.SSD1306_I2C(128, 64, i2c)
+
+if Debug: print(" - scanning")
+i2cdevs = i2c.scan()
+
+if Debug: print(" - devices: {0}".format(i2cdevs))
+
+# Determine what we have connected to I2C
+isOLED = 0x3c in i2cdevs
+bhLight = 0x23 in i2cdevs
+bh2Light = 0x5c in i2cdevs
+tslLight = 0x39 in i2cdevs
+
+if Debug: print("OLED present: {0}".format(isOLED))
+if Debug: print("Light meters\n  BH1730: {0}\n  BH1730 AUX: {1}\n  TSL2561: {2}".format(bhLight, bh2Light, tslLight))
+
+if isOLED:
+    oled = ssd1306.SSD1306_I2C(128, 64, i2c)
 time.sleep_ms(100)
 
 # magic constants )
@@ -70,9 +94,12 @@ def get_moisture():
     return(s)
 
 def draw_icon(icon, posx, posy):
-  for y, row in enumerate(icon):
-    for x, c in enumerate(row):
-        oled.pixel(x+posx, y+posy, c)
+    if not isOLED:
+        return
+
+    for y, row in enumerate(icon):
+        for x, c in enumerate(row):
+            oled.pixel(x+posx, y+posy, c)
 
 def get_eui():
     id = ubinascii.hexlify(machine.unique_id()).decode()
@@ -103,26 +130,32 @@ def w_connect():
     if Debug: print("WiFi: OK")
 
 def oledImage(file):
-     IMAGE_WIDTH = 63
-     IMAGE_HEIGHT = 63
+    if not isOLED:
+        return
 
-     with open('assets/'+file, 'rb') as f:
-         f.readline() # Magic number
-         f.readline() # Creator comment
-         f.readline() # Dimensions
-         data = bytearray(f.read())
-         fbuf = framebuf.FrameBuffer(data, IMAGE_WIDTH, IMAGE_HEIGHT, framebuf.MONO_HLSB)
-         # To display just blit it to the display's framebuffer (note you need to invert, since ON pixels are dark on a normal screen, light on OLED).
-         oled.invert(1)
-         oled.blit(fbuf, 0, 0)
+    IMAGE_WIDTH = 63
+    IMAGE_HEIGHT = 63
 
-     oled.text("Octopus", 66,6)
-     oled.text("Lab", 82,16)
-     oled.text("Micro", 74,35)
-     oled.text("Python", 70,45)
-     oled.show()
+    with open('assets/'+file, 'rb') as f:
+        f.readline() # Magic number
+        f.readline() # Creator comment
+        f.readline() # Dimensions
+        data = bytearray(f.read())
+        fbuf = framebuf.FrameBuffer(data, IMAGE_WIDTH, IMAGE_HEIGHT, framebuf.MONO_HLSB)
+        # To display just blit it to the display's framebuffer (note you need to invert, since ON pixels are dark on a normal screen, light on OLED).
+        oled.invert(1)
+        oled.blit(fbuf, 0, 0)
+
+    oled.text("Octopus", 66,6)
+    oled.text("Lab", 82,16)
+    oled.text("Micro", 74,35)
+    oled.text("Python", 70,45)
+    oled.show()
 
 def blinkOledPoint():
+    if not isOLED:
+        return
+
     oled.fill_rect(x0,y0,5,5,1)
     oled.show()
     time.sleep_ms(1000)
@@ -136,6 +169,9 @@ urlPOST = "http://www.octopusengine.org/iot17/add18.php"
 header = {}
 header["Content-Type"] = "application/x-www-form-urlencoded"
 
+def bytearrayToHexString(ba):
+    return ''.join('{:02X}'.format(x) for x in ba)
+
 def sendData():
     try:
         # GET >
@@ -143,11 +179,14 @@ def sendData():
         #print(urlGET)
         #req = urequests.post(url)
         if isTemp:
-            temp = ts.read_temp()
-            tw = int(temp*10)
-            postdata_t = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(tw),"temp1")
-            res = urequests.post(urlPOST, data=postdata_t, headers=header)
-            time.sleep_ms(1000)
+            ds.convert_temp()
+            time.sleep_ms(750)
+            for t in ts:
+                temp = ds.read_temp(t)
+                tw = int(temp*10)
+                postdata_t = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(tw),"t{0}".format(bytearrayToHexString(t)[-6:]))
+                res = urequests.post(urlPOST, data=postdata_t, headers=header)
+                time.sleep_ms(1000)
 
         if isMois:
             sM = get_moisture()
@@ -155,21 +194,40 @@ def sendData():
             res = urequests.post(urlPOST, data=postdata_l, headers=header)
 
         if isLight:
-            numlux = sbh.luminance(BH1750.ONCE_HIRES_1)
-            postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(numlux)),"ligh1")
-            res = urequests.post(urlPOST, data=postdata_l, headers=header)
-            time.sleep_ms(1000)
+            if bhLight:
+                numlux = sbh.luminance(BH1750.ONCE_HIRES_1)
+                postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(numlux)),"ligh1")
+                res = urequests.post(urlPOST, data=postdata_l, headers=header)
+                time.sleep_ms(1000)
+
+            if bh2Light:
+                numlux = sbh2.luminance(BH1750.ONCE_HIRES_1)
+                postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(numlux)),"ligh2")
+                res = urequests.post(urlPOST, data=postdata_l, headers=header)
+                time.sleep_ms(1000)
+
+            if tslLight:
+                numlux = tsl.read()
+                postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(numlux)),"ligh3")
+                res = urequests.post(urlPOST, data=postdata_l, headers=header)
+                time.sleep_ms(1000)
 
     except:
         displMessage("Err: send data",3)
 
 def displMessage(mess,timm):
+    if not isOLED:
+        return
+
     oled.fill_rect(0,ydown,128,10,0)
     oled.text(mess, x0, ydown)
     oled.show()
     time.sleep_ms(timm*1000)
 
 def displBar(by,num,timb,anim):
+    if not isOLED:
+        return
+
     if num>10: num = 10
     oled.fill_rect(xb0,by-1,128,5+2,0) # clear
     for i in range(10):               # 0
@@ -184,12 +242,15 @@ def displBar(by,num,timb,anim):
     time.sleep_ms(timb)
 
 #-----------------------------------------------------------------------------
-oledImage("octopus_image.pbm")
-time.sleep_ms(2500)
-oled.invert(0)
-oled.fill(0)                # reset display
+if isOLED:
+    oledImage("octopus_image.pbm")
+    time.sleep_ms(2500)
+    oled.invert(0)
+    oled.fill(0)                # reset display
 
-oled.text('octopusLAB', 0, 1)
+if isOLED:
+    oled.text('octopusLAB', 0, 1)
+
 if Debug: print("start - init")
 deviceID = str(get_eui())
 if Debug: print("> unique_id: "+ deviceID)
@@ -198,29 +259,53 @@ displMessage("init >",1)
 
 if Debug: print("init dallas temp >")
 try:
-    ts = TemperatureSensor(pinout.ONE_WIRE_PIN)
+    ds = DS18X20(OneWire(dspin))
+    ts = ds.scan()
+
+    if len(ts) <= 0:
+        isTemp = False
+    
+    for t in ts:
+        print(" --{0}".format(bytearrayToHexString(t)))
 except:
     isTemp = False
-print(isTemp)
+print("Found {0} dallas sensors, temp active: {1}".format(len(ts), isTemp))
 
-if Debug: print("init i2c BH1750 >")
-try:
-   sbh = BH1750(i2c)
-except:
-   isLight = False
-print(isLight)
+if bhLight:
+    if Debug: print("init i2c BH1750 >")
+    try:
+        sbh = BH1750(i2c)
+    except:
+        pass
 
-oled.text("wifi",99, 1)
-displMessage("wifi connect >",1)
+if bh2Light:
+    if Debug: print("init i2c BH1750 AUX >")
+    try:
+        sbh2 = BH1750(i2c, addr=0x5C)
+    except:
+        pass
+
+if tslLight:
+    if Debug: print("init i2c TSL2561 >")
+    try:
+        tsl = TSL2561(i2c)
+        tsl.integration_time(402)
+    except:
+        pass
+
+if isOLED:
+    oled.text("wifi",99, 1)
+    displMessage("wifi connect >",1)
 w_connect()
 
-for _ in range(5):
-    draw_icon(ICON_clr, 88 ,0)
-    oled.show()
-    time.sleep_ms(100)
-    draw_icon(ICON_wifi, 88 ,0)
-    oled.show()
-    time.sleep_ms(300)
+if isOLED:
+    for _ in range(5):
+        draw_icon(ICON_clr, 88 ,0)
+        oled.show()
+        time.sleep_ms(100)
+        draw_icon(ICON_wifi, 88 ,0)
+        oled.show()
+        time.sleep_ms(300)
 
 it = 0
 def timerSend():
@@ -244,26 +329,44 @@ tim.callback(timer2do)
 sendData() # first test sending
 
 if Debug: print("start - loop")
-displMessage("start >",1)
+
+if isOLED:
+    displMessage("start >",1)
 
 while True:
     try:
         if isLight:
-            numlux = sbh.luminance(BH1750.ONCE_HIRES_1)
-            print("L:"+str(numlux))
-            displBar(yb0,int(math.log10(numlux)*2),300,1)
+            if bhLight:
+                numlux = sbh.luminance(BH1750.ONCE_HIRES_1)
+                print("BH:"+str(numlux))
+                displBar(yb0,int(math.log10(numlux)*2),300,1)
+
+            if bh2Light:
+                numlux = sbh2.luminance(BH1750.ONCE_HIRES_1)
+                print("BH AUX:"+str(numlux))
+                displBar(yb0,int(math.log10(numlux)*2),300,1)
+            
+            if tslLight:
+                numlux = tsl.read()
+                print("TSL:"+str(numlux))
+                displBar(yb0,int(math.log10(numlux)*2),300,1)
 
         if isTemp:
-          temp = ts.read_temp()
-          tw = int(temp*10)
-          print("T:"+str(tw/10))
-          threeDigits(oled,tw,True,True)
+            ds.convert_temp()
+            time.sleep_ms(750)
+            for t in ts:
+                temp = ds.read_temp(t)
+                tw = int(temp*10)
+                print("T({0}): {1}".format(bytearrayToHexString(t), str(tw/10)))
+                if isOLED:
+                    threeDigits(oled,tw,True,True)
 
         #if isMois: #only test
         #    s = get_moisture()
         #    print("M:"+str(s))
 
-    except:
+    except Exception as e:
+        print("Exception: {0}".format(e))
         displMessage("Err: main loop",3)
     #blinkOledPoint()
     time.sleep_ms(1000)
