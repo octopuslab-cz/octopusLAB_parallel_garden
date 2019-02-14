@@ -10,7 +10,7 @@ Monitoring of basic values:
 
 ![prototyp1](./images/prototyp1.png)
 
-history:
+## history:
 <pre>
 2018/05 octopusLAB IoT board prototype
 2018/11 - version 1
