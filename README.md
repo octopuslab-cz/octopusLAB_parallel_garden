@@ -3,11 +3,10 @@ parallel garden project - IoT and hydroponics monitoring
 
 with #IoTboart (octopusLAB)
 
----
-https://github.com/ParallelGarden/Hydroponics-in-a-box
+
 
 ---
-![images](./images/sensors01g.png)
+![sensors01](./images/sensors01g.png)
 
 
 
@@ -22,4 +21,10 @@ history:
 2019/01 Beta test - edition with: temperature, moisture and light monitoring (MicroPython)
 > 2019/03 - PWM LED control, Relay - pump
 </pre>
+
+---
+![main project](./images/loga-pp.png)
+Main project >
+
+https://github.com/ParallelGarden/Hydroponics-in-a-box
 
