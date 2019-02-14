@@ -7,7 +7,7 @@ with #IoTboart (octopusLAB)
 https://github.com/ParallelGarden/Hydroponics-in-a-box
 
 ---
-![images](sensors01g.png)
+![images](./images/sensors01g.png)
 
 
 
