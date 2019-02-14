@@ -8,6 +8,7 @@ with #IoTboart (octopusLAB)
 ---
 ![sensors01](./images/sensors01g.png)
 
+![sensors01](./images/data20190117.png)
 
 
 
