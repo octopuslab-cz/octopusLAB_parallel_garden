@@ -8,9 +8,6 @@ Monitoring of basic values:
 
 ![data201812](./images/data20190117.png)
 
-![sensors01](./images/sensors01g.png)
-
----
 history:
 <pre>
 2018/05 octopusLAB IoT board prototype
@@ -21,6 +18,11 @@ history:
 </pre>
 
 ---
+
+![sensors01](./images/sensors01g.png)
+
+---
+
 ![main project](./images/loga-pp.png)
 Main project >
 
