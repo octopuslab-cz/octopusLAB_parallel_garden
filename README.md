@@ -22,9 +22,9 @@ history:
 ![sensors01](./images/sensors01g.png)
 
 ---
-
-![main project](./images/loga-pp.png)
 Main project >
 
 https://github.com/ParallelGarden/Hydroponics-in-a-box
+
+![main project](./images/loga-pp.png)
 
