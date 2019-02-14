@@ -3,19 +3,12 @@ parallel garden project - IoT and hydroponics monitoring
 
 with #IoTboart (octopusLAB)
 
-
-
 ---
 Monitoring of basic values:
+
 ![data201812](./images/data20190117.png)
 
-
 ![sensors01](./images/sensors01g.png)
-
-
-
-
-
 
 ---
 history:
