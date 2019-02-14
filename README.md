@@ -7,6 +7,13 @@ with #IoTboart (octopusLAB)
 https://github.com/ParallelGarden/Hydroponics-in-a-box
 
 ---
+![images](sensors01g.png)
+
+
+
+
+
+
 history:
 <pre>
 2018/05 octopusLAB IoT board prototype
