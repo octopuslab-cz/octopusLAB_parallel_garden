@@ -6,14 +6,18 @@ with #IoTboart (octopusLAB)
 
 
 ---
-![sensors01](./images/sensors01g.png)
-
+Monitoring of basic values:
 ![data201812](./images/data20190117.png)
 
 
+![sensors01](./images/sensors01g.png)
 
 
 
+
+
+
+---
 history:
 <pre>
 2018/05 octopusLAB IoT board prototype
