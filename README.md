@@ -16,7 +16,7 @@ history:
 2018/11 - version 1
 2018/12 first Alfa testing IoT (ESP32), raspberry Pi (camera), server (MysQL, PHP, JS canvas)
 2019/01 Beta test - edition with: temperature, moisture and light monitoring (MicroPython)
-> 2019/03 - 12 edition: & PWM LED control, Relay - pump
+> 2019/03 - 12V edition: & PWM LED control, Relay - pump
 </pre>
 
 ---
