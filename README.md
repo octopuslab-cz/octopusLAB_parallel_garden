@@ -30,3 +30,9 @@ https://github.com/ParallelGarden/Hydroponics-in-a-box
 
 ![main project](./images/loga-pp.png)
 
+This project consists of two projects that form a compatible outcome product: hydroponics system itself, and IoT device that is being developed in order to collect data about the growing process, optimize costs, and eventually to take control over the system.
+
+---
+<h2>Contribute</h2>
+You are welcome to contribute to this repository by providing documentation to code, submitting issue reports, enhancement requests and pull requests.
+
