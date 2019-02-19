@@ -25,12 +25,13 @@ from util.display_segment import *
 from assets.icons9x9 import ICON_clr, ICON_wifi
 
 from util.pinout import set_pinout
+import json #setup
 
-ver = "0.23/2019"
+ver = "0.24/2019"
 print("sensor_log.py - version: " + ver)
 
 Debug = True
-place = "OL-DEV" # name group of IoT
+place = "temp" # name group of IoT > load from config
 minute = 10 # 1/10 for data send
 #--- setup ---
 isTemp = True
@@ -52,6 +53,21 @@ pwM = Pin(pinout.PWM1_PIN, Pin.OUT)
 pin_an = Pin(pinout.I35_PIN, Pin.IN)
 adcM = adc = machine.ADC(pin_an)
 dspin = machine.Pin(pinout.ONE_WIRE_PIN)
+
+rtc = machine.RTC() # real time
+
+garden_config = {}
+print("load config >")
+try:
+    with open('config/garden.json', 'r') as f:
+        d = f.read()
+        f.close()
+        garden_config = json.loads(d)
+    print("place from garden.json:")
+    place = garden_config.get('place')
+    print(place)
+except:
+        print("Device config 'config/garden.json' does not exist")
 
 if Debug: print("init i2c >")
 i2c = machine.I2C(-1, machine.Pin(pinout.I2C_SCL_PIN), machine.Pin(pinout.I2C_SDA_PIN))
@@ -76,11 +92,25 @@ time.sleep_ms(100)
 
 # magic constants )
 aa = 16 # one segment size
-y0 = 9  # y possition
-x0 = aa+5
+y0 = 7  # y possition
+x0 = aa-6
 xb0 = 0 # display bar possition
 yb0 = 58
 ydown = 57
+xt = 88 # display time possition
+yt = 38
+
+def add0(sn):
+    ret_str=str(sn)
+    if int(sn)<10:
+       ret_str = "0"+str(sn)
+    return ret_str
+
+def get_hhmm():
+    #print(str(rtc.datetime()[4])+":"+str(rtc.datetime()[5]))
+    hh=add0(rtc.datetime()[4])
+    mm=add0(rtc.datetime()[5])
+    return hh+":"+mm
 
 def get_moisture():
     pwM.value(1)
@@ -188,11 +218,6 @@ def sendData():
                 res = urequests.post(urlPOST, data=postdata_t, headers=header)
                 time.sleep_ms(1000)
 
-        if isMois:
-            sM = get_moisture()
-            postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(sM)),"mois1")
-            res = urequests.post(urlPOST, data=postdata_l, headers=header)
-
         if isLight:
             if bhLight:
                 numlux = sbh.luminance(BH1750.ONCE_HIRES_1)
@@ -211,6 +236,11 @@ def sendData():
                 postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(numlux)),"ligh3")
                 res = urequests.post(urlPOST, data=postdata_l, headers=header)
                 time.sleep_ms(1000)
+
+        if isMois:
+            sM = get_moisture()
+            postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(sM)),"mois1")
+            res = urequests.post(urlPOST, data=postdata_l, headers=header)
 
     except:
         displMessage("Err: send data",3)
@@ -264,7 +294,7 @@ try:
 
     if len(ts) <= 0:
         isTemp = False
-    
+
     for t in ts:
         print(" --{0}".format(bytearrayToHexString(t)))
 except:
@@ -334,6 +364,10 @@ if isOLED:
     displMessage("start >",1)
 
 while True:
+    if isOLED: # displ time
+      oled.fill_rect(xt,yt,xt+50,yt+10,0)
+      oled.text(get_hhmm(), xt, yt)
+      oled.show()
     try:
         if isLight:
             if bhLight:
@@ -345,7 +379,7 @@ while True:
                 numlux = sbh2.luminance(BH1750.ONCE_HIRES_1)
                 print("BH AUX:"+str(numlux))
                 displBar(yb0,int(math.log10(numlux)*2),300,1)
-            
+
             if tslLight:
                 numlux = tsl.read()
                 print("TSL:"+str(numlux))
@@ -367,6 +401,10 @@ while True:
 
     except Exception as e:
         print("Exception: {0}".format(e))
-        displMessage("Err: main loop",3)
+        try:
+            displMessage("Err: main loop",3)
+        except:
+            # In case OLED error, do not crash^M
+            pass
     #blinkOledPoint()
     time.sleep_ms(1000)
