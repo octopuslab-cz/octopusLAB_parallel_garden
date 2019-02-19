@@ -1,5 +1,6 @@
 <?
 header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Origin: *");
 
 if (IsSet($_GET["sel"])):$sel=$_GET["sel"];else:$sel="device";endif;
 if (IsSet($_GET["place"])):$place=$_GET["place"];else:$place="none";endif;
@@ -32,27 +33,26 @@ switch ($sel) {
         $sql ="SELECT * FROM `iot17` ORDER BY `id` DESC LIMIT $limit";
 }
 
-$json_data=array();//create the array 
+$json_data=array();//create the array
 
 
 $queryTable = MySQL::query($sql);
 while($row = $queryTable->fetch()) {
- 
+
     /*$vznik = Date("Y-m-d",$row["id"]);
     $vznikH = Date("H:i",$row["id"]);
     echo "<br />";*/
-    $json_array['id']=$row['id'];  
-    $json_array['place']=$row['place'];  
+    $json_array['id']=$row['id'];
+    $json_array['place']=$row['place'];
     $json_array['device']=$row['device'];
     $json_array['type']=$row['type'];
-    $json_array['value']=$row['value']; 
-    
-    array_push($json_data,$json_array);     
+    $json_array['value']=$row['value'];
+
+    array_push($json_data,$json_array);
     }
-    
-    echo json_encode($json_data); 
-    
+
+    echo json_encode($json_data);
+
 }  //end
 
 ?>
-
