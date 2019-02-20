@@ -5,6 +5,8 @@ DS18B20 "Dallas" temperature sensor, light sensor BH1750, moisture sensor
 ampy -p /COM5 put sensor_log.py main.py
 alfa > beta
 """
+ver = "0.25/2019"
+print("sensor_log.py - version: " + ver)
 
 import machine
 from machine import Pin, PWM, Timer
@@ -27,11 +29,8 @@ from assets.icons9x9 import ICON_clr, ICON_wifi
 from util.pinout import set_pinout
 import json #setup
 
-ver = "0.24/2019"
-print("sensor_log.py - version: " + ver)
-
 Debug = True
-place = "temp" # name group of IoT > load from config
+place = "none" # name group of IoT > load from config
 minute = 10 # 1/10 for data send
 #--- setup ---
 isTemp = True
@@ -54,10 +53,8 @@ pin_an = Pin(pinout.I35_PIN, Pin.IN)
 adcM = adc = machine.ADC(pin_an)
 dspin = machine.Pin(pinout.ONE_WIRE_PIN)
 
-rtc = machine.RTC() # real time
-
 garden_config = {}
-print("load config >")
+if Debug: print("load config >")
 try:
     with open('config/garden.json', 'r') as f:
         d = f.read()
@@ -83,8 +80,9 @@ bhLight = 0x23 in i2cdevs
 bh2Light = 0x5c in i2cdevs
 tslLight = 0x39 in i2cdevs
 
-if Debug: print("OLED present: {0}".format(isOLED))
-if Debug: print("Light meters\n  BH1730: {0}\n  BH1730 AUX: {1}\n  TSL2561: {2}".format(bhLight, bh2Light, tslLight))
+if Debug:
+    print("OLED present: {0}".format(isOLED))
+    print("Light meters\n  BH1730: {0}\n  BH1730 AUX: {1}\n  TSL2561: {2}".format(bhLight, bh2Light, tslLight))
 
 if isOLED:
     oled = ssd1306.SSD1306_I2C(128, 64, i2c)
@@ -285,6 +283,11 @@ if Debug: print("start - init")
 deviceID = str(get_eui())
 if Debug: print("> unique_id: "+ deviceID)
 
+if isOLED:
+    oled.text("wifi",99, 1)
+    displMessage("wifi connect >",1)
+w_connect()
+
 displMessage("init >",1)
 
 if Debug: print("init dallas temp >")
@@ -324,11 +327,6 @@ if tslLight:
         pass
 
 if isOLED:
-    oled.text("wifi",99, 1)
-    displMessage("wifi connect >",1)
-w_connect()
-
-if isOLED:
     for _ in range(5):
         draw_icon(ICON_clr, 88 ,0)
         oled.show()
@@ -347,6 +345,19 @@ def timerSend():
         if Debug: print("10 min. > send data:")
         sendData() # read sensors and send data
         it = 0
+
+if Debug: print("time setup >")
+rtc = machine.RTC() # real time
+urltime="http://www.octopusengine.org/api/hydrop/get-datetime.php"
+try:
+   response = urequests.get(urltime)
+   dt_str = (response.text+(",0,0")).split(",")
+   print(str(dt_str))
+   dt_int = [int(numeric_string) for numeric_string in dt_str]
+   rtc.init(dt_int)
+   print(str(rtc.datetime()))
+except:
+    print("Err. Setup time from WiFi")
 
 tim1 = Timer(0)
 tim1.init(period=10000, mode=Timer.PERIODIC, callback=lambda t:timerSend())
