@@ -1,5 +1,7 @@
 # Frontend
 
-MySql > JSON data > chart / setups¨
+2018/10: MySql > data PHP + JS and simple HTML5 canvas
 
-we are testing react
+2019/02: MySql > JSON data > chart / setups
+
+we are testing react: https://reactjs.org/
