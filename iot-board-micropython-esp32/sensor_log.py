@@ -44,6 +44,7 @@ isPH = False #TODO
 tslLight = False
 bhLight = False
 bh2Light = False
+wifi_retries = 20
 
 pinout = set_pinout()
 led = Pin(pinout.BUILT_IN_LED, Pin.OUT) # BUILT_IN_LED
@@ -141,21 +142,27 @@ def connected_callback(sta):
     print(sta.ifconfig())
     WSBindIP = sta.ifconfig()[0]
 
-def connecting_callback():
-    # np[0] = (0, 0, 128)
-    # np.write()
+def connecting_callback(attempt):
+    draw_icon(ICON_wifi, 88 ,0)
+    oled.show()
     blink(led, 50, 100)
+    draw_icon(ICON_clr, 88 ,0)
+    oled.show()
+
+def connecting_timeout_callback():
+    print("Failed connect to wifi: Timed out")
 
 def w_connect():
     from util.wifi_connect import read_wifi_config, WiFiConnect
     time.sleep_ms(1000)
     wifi_config = read_wifi_config()
     if Debug: print("config for: " + wifi_config["wifi_ssid"])
-    w = WiFiConnect()
+    w = WiFiConnect(wifi_config["wifi_retries"] if "wifi_retries" in wifi_config else wifi_retries )
     w.events_add_connecting(connecting_callback)
     w.events_add_connected(connected_callback)
-    w.connect(wifi_config["wifi_ssid"], wifi_config["wifi_pass"])
-    if Debug: print("WiFi: OK")
+    w.events_add_timeout(connecting_timeout_callback)
+    wifi_status = w.connect(wifi_config["wifi_ssid"], wifi_config["wifi_pass"])
+    if Debug: print("WiFi: OK" if wifi_status else "WiFi: Error")
 
 def oledImage(file):
     if not isOLED:
