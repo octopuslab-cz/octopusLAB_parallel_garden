@@ -142,7 +142,7 @@ def connected_callback(sta):
     print(sta.ifconfig())
     WSBindIP = sta.ifconfig()[0]
 
-def disconnected_callback(sta):
+def disconnected_callback():
     if isOLED:
         draw_icon(ICON_clr, 88 ,0)
         oled.show()
