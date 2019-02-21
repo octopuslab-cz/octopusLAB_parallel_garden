@@ -16,8 +16,10 @@ class WiFiConnect:
     def __init__(self, retries = 0):
         self.events_connecting = []
         self.events_connected = []
+        self.events_disconnected = []
         self.events_timeout = []
         self.retries = retries
+        self.lastState = False
 
     def __call_events_connecting__(self, retry):
         for f in self.events_connecting:
@@ -26,6 +28,10 @@ class WiFiConnect:
     def __call_events_connected__(self, sta):
         for f in self.events_connected:
             f(sta)
+
+    def __call_events_disconnected__(self):
+        for f in self.events_disconnected:
+            f()
 
     def __call_events_timeout__(self):
         for f in self.events_timeout:
@@ -37,26 +43,29 @@ class WiFiConnect:
     def events_add_connected(self, func):
         self.events_connected.append(func)
 
+    def events_add_disconnected(self, func):
+        self.events_disconnected.append(func)
+
     def events_add_timeout(self, func):
         self.events_timeout.append(func)
 
     def connect(self, ssid, password):
         retry = 1
         # get an instance of the sta_if WiFi interface
-        sta_if = network.WLAN(network.STA_IF)
+        self.sta_if = network.WLAN(network.STA_IF)
         
         # check if we are already connected to a WiFi
-        if sta_if.isconnected():
-            self.__call_events_connected__(sta_if)
+        if self.sta_if.isconnected():
+            self.__call_events_connected__(self.sta_if)
             return True
 
         # activate interface
-        sta_if.active(True)
+        self.sta_if.active(True)
 
         # connect to network via provided ID
-        sta_if.connect(ssid, password)
+        self.sta_if.connect(ssid, password)
 
-        while not sta_if.isconnected():
+        while not self.sta_if.isconnected():
             if retry == self.retries:
                 break
 
@@ -68,13 +77,31 @@ class WiFiConnect:
         # print connection info - automatic
         # currently this prints out as if no connection was established - giving 0.0.0.0 sd ip
         # however, connection IS made and functional
-        if sta_if.isconnected():
-            self.__call_events_connected__(sta_if)
+        self.lastState = self.sta_if.isconnected()
+
+        if self.sta_if.isconnected():
+            self.__call_events_connected__(self.sta_if)
             return True
         else:
             self.__call_events_timeout__()
-            sta_if.active(False)
+            self.sta_if.active(False)
             return False
+
+    def isconnected(self):
+        return self.sta_if.isconnected()
+
+    def handle_wifi(self):
+        print("Handle wifi running: last: {0}, now: {1}".format(self.lastState, self.sta_if.isconnected()))
+        if self.lastState and not self.sta_if.isconnected():
+            print("Handle wifi False")
+            self.lastState = False
+            self.__call_events_disconnected__()
+
+        if not self.lastState and self.sta_if.isconnected():
+            print("Handle wifi True")
+            self.lastState = True
+            self.__call_events_connected__(self.sta_if)
+
 
 def read_wifi_config():
     # TODO file does not exist
