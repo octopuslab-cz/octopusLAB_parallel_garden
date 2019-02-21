@@ -44,7 +44,7 @@ isPH = False #TODO
 tslLight = False
 bhLight = False
 bh2Light = False
-wifi_retries = 20
+wifi_retries = 100
 
 pinout = set_pinout()
 led = Pin(pinout.BUILT_IN_LED, Pin.OUT) # BUILT_IN_LED
@@ -87,7 +87,7 @@ if Debug:
 
 if isOLED:
     oled = ssd1306.SSD1306_I2C(128, 64, i2c)
-time.sleep_ms(100)
+    time.sleep_ms(100)
 
 # magic constants )
 aa = 16 # one segment size
@@ -142,26 +142,38 @@ def connected_callback(sta):
     print(sta.ifconfig())
     WSBindIP = sta.ifconfig()[0]
 
+def disconnected_callback(sta):
+    if isOLED:
+        draw_icon(ICON_clr, 88 ,0)
+        oled.show()
+
+
 def connecting_callback(attempt):
-    draw_icon(ICON_wifi, 88 ,0)
-    oled.show()
+    if isOLED:
+        draw_icon(ICON_wifi, 88 ,0)
+        oled.show()
+
     blink(led, 50, 100)
-    draw_icon(ICON_clr, 88 ,0)
-    oled.show()
+
+    if isOLED:
+        draw_icon(ICON_clr, 88 ,0)
+        oled.show()
 
 def connecting_timeout_callback():
     print("Failed connect to wifi: Timed out")
 
 def w_connect():
+    global wifi
     from util.wifi_connect import read_wifi_config, WiFiConnect
     time.sleep_ms(1000)
     wifi_config = read_wifi_config()
     if Debug: print("config for: " + wifi_config["wifi_ssid"])
-    w = WiFiConnect(wifi_config["wifi_retries"] if "wifi_retries" in wifi_config else wifi_retries )
-    w.events_add_connecting(connecting_callback)
-    w.events_add_connected(connected_callback)
-    w.events_add_timeout(connecting_timeout_callback)
-    wifi_status = w.connect(wifi_config["wifi_ssid"], wifi_config["wifi_pass"])
+    wifi = WiFiConnect(wifi_config["wifi_retries"] if "wifi_retries" in wifi_config else wifi_retries )
+    wifi.events_add_connecting(connecting_callback)
+    wifi.events_add_connected(connected_callback)
+    wifi.events_add_timeout(connecting_timeout_callback)
+    wifi.events_add_disconnected(disconnected_callback)
+    wifi_status = wifi.connect(wifi_config["wifi_ssid"], wifi_config["wifi_pass"])
     if Debug: print("WiFi: OK" if wifi_status else "WiFi: Error")
 
 def oledImage(file):
@@ -333,15 +345,6 @@ if tslLight:
     except:
         pass
 
-if isOLED:
-    for _ in range(5):
-        draw_icon(ICON_clr, 88 ,0)
-        oled.show()
-        time.sleep_ms(100)
-        draw_icon(ICON_wifi, 88 ,0)
-        oled.show()
-        time.sleep_ms(300)
-
 it = 0
 def timerSend():
     global it
@@ -387,6 +390,9 @@ while True:
       oled.text(get_hhmm(), xt, yt)
       oled.show()
     try:
+
+        wifi.handle_wifi()
+
         if isLight:
             if bhLight:
                 numlux = sbh.luminance(BH1750.ONCE_HIRES_1)
