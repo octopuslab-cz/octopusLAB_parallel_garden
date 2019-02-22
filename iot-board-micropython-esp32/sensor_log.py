@@ -5,34 +5,33 @@ DS18B20 "Dallas" temperature sensor, light sensor BH1750, moisture sensor
 ampy -p /COM5 put sensor_log.py main.py
 alfa > beta
 """
-ver = "0.25/2019"
-print("sensor_log.py - version: " + ver)
+ver = "26" # "0.ver" int > db
+# last update 22.2.2019
+print("sensor_log.py - version: 0." + ver)
 
 import machine
 from machine import Pin, PWM, Timer
-import time
-import urequests
-import os, ubinascii
-import framebuf
-import math
+import time, os, ubinascii
+import urequests, json
+import framebuf, math
 
 from lib import ssd1306
 from onewire import OneWire
 from ds18x20 import DS18X20
 from lib.bh1750 import BH1750
 from lib.tsl2561 import TSL2561
+from util.pinout import set_pinout
 from util.buzzer import beep
 from util.led import blink
 from util.display_segment import *
+from util.wifi_connect import read_wifi_config, WiFiConnect
 from assets.icons9x9 import ICON_clr, ICON_wifi
 
-from util.pinout import set_pinout
-import json #setup
-
 Debug = True
-place = "none" # name group of IoT > load from config
-minute = 10 # 1/10 for data send
-#--- setup ---
+place = "none"      # name group of IoT > load from config/garden.json
+minute = 10         # 1/10 for data send
+wifi_retries = 100  # for wifi connecting
+
 isTemp = True
 isLight = True
 isMois = True
@@ -44,28 +43,28 @@ isPH = False #TODO
 tslLight = False
 bhLight = False
 bh2Light = False
-wifi_retries = 100
 
 pinout = set_pinout()
 led = Pin(pinout.BUILT_IN_LED, Pin.OUT) # BUILT_IN_LED
-#moisture
-pwM = Pin(pinout.PWM1_PIN, Pin.OUT)
+pwM = Pin(pinout.PWM1_PIN, Pin.OUT)     # moisture
 pin_an = Pin(pinout.I35_PIN, Pin.IN)
 adcM = adc = machine.ADC(pin_an)
 dspin = machine.Pin(pinout.ONE_WIRE_PIN)
 
-garden_config = {}
+garden_config = {}  # main system config - default/flash-json/web-cloud
 if Debug: print("load config >")
 try:
     with open('config/garden.json', 'r') as f:
         d = f.read()
         f.close()
         garden_config = json.loads(d)
-    print("place from garden.json:")
+    if Debug: print("from garden.json:")
     place = garden_config.get('place')
-    print(place)
+
 except:
         print("Device config 'config/garden.json' does not exist")
+if Debug: print("place = " + place)
+print()
 
 if Debug: print("init i2c >")
 i2c = machine.I2C(-1, machine.Pin(pinout.I2C_SCL_PIN), machine.Pin(pinout.I2C_SDA_PIN))
@@ -164,7 +163,6 @@ def connecting_timeout_callback():
 
 def w_connect():
     global wifi
-    from util.wifi_connect import read_wifi_config, WiFiConnect
     time.sleep_ms(1000)
     wifi_config = read_wifi_config()
     if Debug: print("config for: " + wifi_config["wifi_ssid"])
@@ -288,7 +286,7 @@ def displBar(by,num,timb,anim):
     oled.show()
     time.sleep_ms(timb)
 
-#-----------------------------------------------------------------------------
+#----------------------------------------- init ------------------------------
 if isOLED:
     oledImage("octopus_image.pbm")
     time.sleep_ms(2500)
@@ -382,8 +380,17 @@ sendData() # first test sending
 if Debug: print("start - loop")
 
 if isOLED:
-    displMessage("start >",1)
+    displMessage("start > 0."+ver,1)
 
+#log start > version
+try:
+    postdata_v = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, ver,"log_ver")
+    res = urequests.post(urlPOST, data=postdata_v, headers=header)
+    time.sleep_ms(200)
+except:
+    displMessage("Err: send data",3)
+
+# ======================================= main loop ==========================
 while True:
     if isOLED: # displ time
       oled.fill_rect(xt,yt,xt+50,yt+10,0)
