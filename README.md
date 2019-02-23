@@ -5,13 +5,21 @@ with #IoTboart (octopusLAB)
 
 ---
 (1) iot-board-hw-esp32
+
 (2) iot-board-micropython-esp32
+
 (3) rpi-timelapsephoto
+
 (4) server-mysql
+
 (5) server-db ? grafana
+
 (6) frontend - react
+
 (7) frontend ? grafana
+
 (8) others
+
 (9) android app
 
 ---
