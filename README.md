@@ -4,6 +4,18 @@ parallel garden project - IoT and hydroponics monitoring
 with #IoTboart (octopusLAB)
 
 ---
+(1) iot-board-hw-esp32
+(2) iot-board-micropython-esp32
+(3) rpi-timelapsephoto
+(4) server-mysql
+(5) server-db ? grafana
+(6) frontend - react
+(7) frontend ? grafana
+(8) others
+(9) android app
+
+---
+
 Monitoring of basic values:
 
 ![data201812](./images/data20190117.png)
