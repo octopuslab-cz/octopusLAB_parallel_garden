@@ -2,8 +2,9 @@
 parallel garden project - IoT and hydroponics monitoring
 
 with #IoTboart (octopusLAB)
-
 ---
+![main1](./images/hydroponie-beta1902-dark.png )
+
 (1) iot-board-hw-esp32
 
 (2) iot-board-micropython-esp32
