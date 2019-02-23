@@ -8,5 +8,5 @@ sensors (for water pump)
 control (relay, MOS FET PWM)
 ---
 
-![sensors01](./images/sensors01g.png)
+![sensors01](../images/sensors01g.png)
 
