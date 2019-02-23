@@ -40,9 +40,6 @@ Monitoring of basic values:
 > 2019/03 - 12V edition: & PWM LED control, Relay - pump
 </pre>
 
----
-
-![sensors01](./images/sensors01g.png)
 
 ---
 Main project >
