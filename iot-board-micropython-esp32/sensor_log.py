@@ -2,19 +2,16 @@
 sensor_log for #hydroponics IoT monitoring system
 example usage of  SSD1306 OLED display
 DS18B20 "Dallas" temperature sensor, light sensor BH1750, moisture sensor
-ampy -p /COM5 put sensor_log.py main.py
-alfa > beta
 """
-ver = "26" # "0.ver" int > db
+ver = "27" # "0.ver" int > db
 # last update 22.2.2019
 print("sensor_log.py - version: 0." + ver)
 
 import machine
-from machine import Pin, PWM, Timer
+from machine import Pin, PWM, ADC, Timer
 import time, os, ubinascii
 import urequests, json
 import framebuf, math
-
 from lib import ssd1306
 from onewire import OneWire
 from ds18x20 import DS18X20
@@ -26,6 +23,10 @@ from util.led import blink
 from util.display_segment import *
 from util.wifi_connect import read_wifi_config, WiFiConnect
 from assets.icons9x9 import ICON_clr, ICON_wifi
+from util.octopus_lib import *
+from util.iot_garden import *
+getOctopusLibVer()
+getGardenLibVer()
 
 Debug = True
 place = "none"      # name group of IoT > load from config/garden.json
@@ -36,7 +37,7 @@ isTemp = True
 isLight = True
 isMois = True
 isPressure = False
-isAD = False #TODO
+isAD = True
 isPH = False #TODO
 
 # Defaults
@@ -50,8 +51,11 @@ pwM = Pin(pinout.PWM1_PIN, Pin.OUT)     # moisture
 pin_an = Pin(pinout.I35_PIN, Pin.IN)
 adcM = adc = machine.ADC(pin_an)
 dspin = machine.Pin(pinout.ONE_WIRE_PIN)
+pin_an = Pin(pinout.ANALOG_PIN, Pin.IN)
+adc = machine.ADC(pin_an)
 
 garden_config = {}  # main system config - default/flash-json/web-cloud
+print()
 if Debug: print("load config >")
 try:
     with open('config/garden.json', 'r') as f:
@@ -59,11 +63,19 @@ try:
         f.close()
         garden_config = json.loads(d)
     if Debug: print("from garden.json:")
+    confVer = garden_config.get('version')
     place = garden_config.get('place')
-
+    runDemo = garden_config.get('rundemo')
+    startLight = garden_config.get('startlight')
+    stopLight = garden_config.get('stoplight')
+    if Debug:
+        print("config version: " + str(confVer))
+        print("place: " + place)
+        print("run demo: " + str(runDemo))
+        print("start light: " + str(startLight))
+        print("stop light: " + str(stopLight))
 except:
         print("Device config 'config/garden.json' does not exist")
-if Debug: print("place = " + place)
 print()
 
 if Debug: print("init i2c >")
@@ -98,12 +110,6 @@ ydown = 57
 xt = 88 # display time possition
 yt = 38
 
-def add0(sn):
-    ret_str=str(sn)
-    if int(sn)<10:
-       ret_str = "0"+str(sn)
-    return ret_str
-
 def get_hhmm():
     #print(str(rtc.datetime()[4])+":"+str(rtc.datetime()[5]))
     hh=add0(rtc.datetime()[4])
@@ -115,9 +121,11 @@ def get_moisture():
     time.sleep_ms(1000)
     s1 = adcM.read() #moisture sensor
     time.sleep_ms(1000)
-    s2 = adcM.read() #moisture sensor
+    s2 = adcM.read()
+    time.sleep_ms(1000)
+    s3 = adcM.read()
 
-    s = int((s1+s2)/2)
+    s = int((s1+s2+s3)/3)
     pwM.value(0)
     return(s)
 
@@ -128,10 +136,6 @@ def draw_icon(icon, posx, posy):
     for y, row in enumerate(icon):
         for x, c in enumerate(row):
             oled.pixel(x+posx, y+posy, c)
-
-def get_eui():
-    id = ubinascii.hexlify(machine.unique_id()).decode()
-    return id #mac2eui(id)
 
 # Define function callback for connecting event
 def connected_callback(sta):
@@ -145,7 +149,6 @@ def disconnected_callback():
     if isOLED:
         draw_icon(ICON_clr, 88 ,0)
         oled.show()
-
 
 def connecting_callback(attempt):
     if isOLED:
@@ -213,9 +216,6 @@ urlMain = "http://www.octopusengine.org/iot17/add19req.php?type=iot&place=pp&dev
 urlPOST = "http://www.octopusengine.org/iot17/add18.php"
 header = {}
 header["Content-Type"] = "application/x-www-form-urlencoded"
-
-def bytearrayToHexString(ba):
-    return ''.join('{:02X}'.format(x) for x in ba)
 
 def sendData():
     try:
@@ -301,6 +301,20 @@ deviceID = str(get_eui())
 if Debug: print("> unique_id: "+ deviceID)
 
 if isOLED:
+    displMessage("version: 0."+ver,1)
+    time.sleep_ms(1500)
+
+if isAD:
+    getADvolt(adc, Debug)
+    print()
+
+print(" --- d e m o --- start:")
+if runDemo:
+    print("YES")
+else:
+    print("NO")
+
+if isOLED:
     oled.text("wifi",99, 1)
     displMessage("wifi connect >",1)
 w_connect()
@@ -370,17 +384,7 @@ except:
 tim1 = Timer(0)
 tim1.init(period=10000, mode=Timer.PERIODIC, callback=lambda t:timerSend())
 
-"""
-tim1 = Timer(1)
-tim1.init(mode=Timer.PERIODIC, period=1000)
-tim.callback(timer2do)
-"""
 sendData() # first test sending
-
-if Debug: print("start - loop")
-
-if isOLED:
-    displMessage("start > 0."+ver,1)
 
 #log start > version
 try:
@@ -391,13 +395,13 @@ except:
     displMessage("Err: send data",3)
 
 # ======================================= main loop ==========================
+if Debug: print("start - loop")
 while True:
     if isOLED: # displ time
       oled.fill_rect(xt,yt,xt+50,yt+10,0)
       oled.text(get_hhmm(), xt, yt)
       oled.show()
     try:
-
         wifi.handle_wifi()
 
         if isLight:
@@ -425,6 +429,9 @@ while True:
                 print("T({0}): {1}".format(bytearrayToHexString(t), str(tw/10)))
                 if isOLED:
                     threeDigits(oled,tw,True,True)
+
+        if isAD:
+            getADvolt(adc, Debug)
 
         #if isMois: #only test
         #    s = get_moisture()
