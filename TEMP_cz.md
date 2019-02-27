@@ -1,6 +1,6 @@
-#Verze 1 - na desce v1
+# Verze 1 - na desce v1
 
-##monitoring
+## monitoring
 
 Teplota: Dallas čidlo - čínské várky umějí být hodně nepovedené
 
@@ -8,13 +8,13 @@ Světlo: I2C senzor BH1750 zatím vypadá dobře
 
 Vlhost: aby se čidlo elektrolýzou brzy nezničilo, zapínáme jen po dobu měření
 
-#Verze 2 (12V) - na desce v2
+# Verze 2 (12V) - na desce v2
 
-##akce:
+## akce:
 
 přidáváme Relé a upravený MOS-FET
 
-##todo1902:
+## todo1902:
 
 db rozšířit na delší ID (po druhé PP sklizni)
 
