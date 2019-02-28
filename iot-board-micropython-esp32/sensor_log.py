@@ -36,10 +36,10 @@ wifi_retries = 100  # for wifi connecting
 
 isTemp = True
 isLight = True
-isMois = True
-isPressure = False
-isAD = True
+isMois = False
+isAD = False
 isPH = False #TODO
+isPressure = False
 
 # Defaults - light sensors
 tslLight = False
@@ -244,6 +244,12 @@ def sendData():
             postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(sM)),"mois1")
             res = urequests.post(urlPOST, data=postdata_l, headers=header)
 
+        if isAD:
+           adV = getADvolt(Debug)
+           displMessage("AD:"+str(adV),2) #only test
+           postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(adV)),"adraw")
+           res = urequests.post(urlPOST, data=postdata_l, headers=header)
+
     except:
         displMessage("Err: send data",3)
 
@@ -307,7 +313,7 @@ if isOLED:
 if isAD:
     getADvolt(Debug)
     print()
-    
+
 print('-' * 33)
 print(" --- d e m o --- start:")
 if runDemo:
@@ -423,7 +429,7 @@ while True:
 
          except Exception as e:
             print("Exception: {0}".format(e))
-            displMessage("Err: main LIGHT",3)
+            displMessage("Err: main LIGHT",2)
 
     #---temperature
     if isTemp:
@@ -438,11 +444,12 @@ while True:
                     threeDigits(oled,tw,True,True)
          except Exception as e:
               print("Exception: {0}".format(e))
-              displMessage("Err: main TEMP",3)
+              displMessage("Err: main TEMP",2)
 
     #---AD input power voltage
     if isAD:
-        getADvolt(Debug)
+        adV = getADvolt(Debug)
+        displMessage("AD:"+str(adV),2) #only test
 
     if isMois: #only test
         s = get_moisture()
