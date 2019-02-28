@@ -10,11 +10,16 @@ from util.pinout import set_pinout
 pinout = set_pinout()
 
 pwM = Pin(pinout.PWM1_PIN, Pin.OUT)     # moisture
-pin_an = Pin(pinout.I35_PIN, Pin.IN)
-adcM = adc = machine.ADC(pin_an)
+pin_adcM = Pin(pinout.I35_PIN, Pin.IN)
+adcM = machine.ADC(pin_adcM)
 
-pin_an = Pin(pinout.ANALOG_PIN, Pin.IN)
-adc = machine.ADC(pin_an)
+pin_adc = Pin(pinout.ANALOG_PIN, Pin.IN)
+adc = machine.ADC(pin_adc)
+
+pin_relay = Pin(pinout.RELAY_PIN, Pin.OUT)
+pin_fet = Pin(pinout.MFET_PIN, Pin.OUT)
+pwm_fet = PWM(pin_fet, 500, 0)
+
 
 # ---------------- procedures
 def getGardenLibVer():
@@ -40,3 +45,26 @@ def get_moisture():
     s = int((s1+s2+s3)/3)
     pwM.value(0)
     return(s)
+
+def demo_relay(number=2, delay=2000):
+    for _ in range (0, number):
+        pin_relay.value(1)
+        time.sleep_ms(delay)
+        pin_relay.value(0)
+        time.sleep_ms(delay)
+
+def demo_fet(duty, delay):
+    pwm_fet.duty(duty)
+    time.sleep_ms(delay)
+
+
+def demo_run():
+    # Demo intensity
+    demo_fet(1, 2000)
+    demo_fet(128, 2000)
+    demo_fet(512, 2000)
+    demo_fet(1023, 2000)
+    demo_fet(0, 2000)
+
+    # demo Relay
+    demo_relay(delay=5000)
