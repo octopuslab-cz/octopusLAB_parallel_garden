@@ -10,3 +10,5 @@ web "interface", charts, pictures, etc
 2019/02: MySql > JSON data > chart / setups
 
 we are testing react: https://reactjs.org/
+
+https://github.com/vladimirvolek/hydro-dashboard
