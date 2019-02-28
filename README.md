@@ -5,23 +5,23 @@ with #IoTboart (octopusLAB)
 ---
 ![main1](./images/hydroponie-beta1902-dark.png )
 
-(1) iot-board-hw-esp32
+(1) iot-board-hw-esp32 > https://github.com/octopusengine/octopusLAB_parallel_garden/tree/master/iot-board-hw-esp32
 
-(2) iot-board-micropython-esp32
+(2) iot-board-micropython-esp32 > https://github.com/octopusengine/octopusLAB_parallel_garden/tree/master/iot-board-micropython-esp32
 
-(3) rpi-timelapsephoto
+(3) rpi-timelapsephoto > https://github.com/octopusengine/octopusLAB_parallel_garden/tree/master/rpi-timelapsephoto
 
-(4) server-mysql
+(4) server-mysql > https://github.com/octopusengine/octopusLAB_parallel_garden/tree/master/server-mysql
 
 (5) server-db ? grafana
 
-(6) frontend - react
+(6) frontend - react >>
 
 (7) frontend ? grafana
 
 (8) others
 
-(9) android app
+(9) android app >> https://github.com/octopusengine/octopusLAB_parallel_garden/tree/master/android-app
 
 ---
 
