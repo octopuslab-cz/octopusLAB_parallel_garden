@@ -318,6 +318,8 @@ print('-' * 33)
 print(" --- d e m o --- start:")
 if runDemo:
     print("YES")
+    displMessage("RUN DEMO",1)
+    demo_run()
 else:
     print("NO")
 
