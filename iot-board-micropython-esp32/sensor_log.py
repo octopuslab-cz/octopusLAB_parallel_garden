@@ -1,10 +1,15 @@
 """
-sensor_log for #hydroponics IoT monitoring system
-example usage of  SSD1306 OLED display
-DS18B20 "Dallas" temperature sensor, light sensor BH1750, moisture sensor
+sensor_log for #hydroponics IoT monitoring and control system
+sensors:
+- SSD1306 OLED display
+- DS18B20 "Dallas" temperature sensor
+- BH1750 light sensor
+- moisture sensor
+control: 
+PWM LED and relay for pump
 """
-ver = "0.28" # int(*100) > db
-# last update 28.2.2019
+ver = "0.29" # int(*100) > db
+# last update 1.3.2019
 print('-' * 33)
 print("sensor_log.py - version: " + ver)
 
@@ -29,17 +34,22 @@ from util.iot_garden import *
 getOctopusLibVer()
 getGardenLibVer()
 
-Debug = True
+Debug = True        # TODO: debugPrint()?
 place = "none"      # group of IoT > load from config/garden.json
 minute = 10         # 1/10 for data send
 wifi_retries = 100  # for wifi connecting
+last8dID = True     # for db only 8 bytes device ID
+tempoffset = 0      # hard correction of bad dallas
+startLight = 12
+stopLight = 12
 
-isTemp = True
-isLight = True
-isMois = False
-isAD = False
-isPH = False #TODO
-isPressure = False
+# Defaults - sensors
+isTemp = False      # temperature
+isLight = False     # light (lux)
+isMois = False      # moisture
+isAD = False        # AD input voltage
+isPH = False        # TODO  
+isPressure = False  # 
 
 # Defaults - light sensors
 tslLight = False
@@ -49,6 +59,7 @@ bh2Light = False
 pinout = set_pinout()
 led = Pin(pinout.BUILT_IN_LED, Pin.OUT) # BUILT_IN_LED
 dspin = machine.Pin(pinout.ONE_WIRE_PIN)  # Dallas temperature
+rtc = machine.RTC() # real time
 
 print()
 iot_config = {}  # main system config - default/flash-json/web-cloud
@@ -66,6 +77,12 @@ try:
     startLight = iot_config.get('startlight')
     stopLight = iot_config.get('stoplight')
 
+    isTemp = iot_config.get('mtemp')
+    isLight = iot_config.get('mlight')
+    isMois = iot_config.get('mmoist')
+    isAD = iot_config.get('manalog')
+    tempoffset = int(iot_config.get('tempoffset'))
+
     if Debug:
         print('=' * 33)
         print("config version: " + str(confVer))
@@ -77,6 +94,8 @@ try:
         print('=' * 33)
 except:
         print("Err. or 'config/garden.json' does not exist")
+print("setup vector [ T L M A d ]:")
+print(str(isTemp)+str(isLight)+str(isMois)+str(isAD)+str(tempoffset))        
 print()
 
 if Debug: print("init i2c >")
@@ -204,6 +223,29 @@ urlPOST = "http://www.octopusengine.org/iot17/add18.php"
 header = {}
 header["Content-Type"] = "application/x-www-form-urlencoded"
 
+def logDevice():
+    #log start > version
+    try:
+        logVer =  int(float(ver)*100)
+        postdata_v = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, logVer,"log_ver")
+        res = urequests.post(urlPOST, data=postdata_v, headers=header)
+        time.sleep_ms(300)
+    except:
+        displMessage("Err: send data",3)
+
+def timeSetup():
+    if Debug: print("time setup >")
+    urltime="http://www.octopusengine.org/api/hydrop/get-datetime.php"
+    try:
+        response = urequests.get(urltime)
+        dt_str = (response.text+(",0,0")).split(",")
+        print(str(dt_str))
+        dt_int = [int(numeric_string) for numeric_string in dt_str]
+        rtc.init(dt_int)
+        print(str(rtc.datetime()))
+    except:
+        print("Err. Setup time from WiFi")
+
 def sendData():
     try:
         # GET >
@@ -253,7 +295,7 @@ def sendData():
     except:
         displMessage("Err: send data",3)
 
-def displTime():
+def timeDisplay():
     if not isOLED:
         return
     try:
@@ -261,7 +303,7 @@ def displTime():
        oled.text(get_hhmm(), xt, yt)
        oled.show()
     except Exception as e:
-       print("displTime() Exception: {0}".format(e))
+       print("timeDisplay() Exception: {0}".format(e))
 
 def displMessage(mess,timm):
     if not isOLED:
@@ -292,19 +334,71 @@ def displBar(by,num,timb,anim):
     oled.show()
     time.sleep_ms(timb)
 
-#----------------------------------------- init ------------------------------
+def runAction():
+    hh=int(add0(rtc.datetime()[4]))
+    print("startL: "+ str(startLight) + " now:"+ str(hh))
+    if (hh > startLight):
+        print("ok - light on")
+
+def sensorsDisplay():
+    #---light
+    if isLight:
+         try:
+            if bhLight:
+                numlux = sbh.luminance(BH1750.ONCE_HIRES_1)
+                print("BH:"+str(numlux))
+                displBar(yb0,int(math.log10(numlux)*2),300,1)
+
+            if bh2Light:
+                numlux = sbh2.luminance(BH1750.ONCE_HIRES_1)
+                print("BH AUX:"+str(numlux))
+
+            if tslLight:
+                numlux = tsl.read()
+                print("TSL:"+str(numlux))
+
+         except Exception as e:
+            print("Exception: {0}".format(e))
+            displMessage("Err: main LIGHT",2)
+
+    #---temperature
+    if isTemp:
+         try:
+            ds.convert_temp()
+            time.sleep_ms(750)
+            for t in ts:
+                temp = ds.read_temp(t)
+                tw = int(temp*10)
+                print("T({0}): {1}".format(bytearrayToHexString(t), str(tw/10)))
+                if isOLED:
+                    threeDigits(oled,tw,True,True)
+         except Exception as e:
+              print("Exception: {0}".format(e))
+              displMessage("Err: main TEMP",2)
+
+    #---AD input power voltage
+    if isAD:
+        adV = getADvolt(Debug)
+        displMessage("AD:"+str(adV),2) #only test
+
+    if isMois: #only test
+        s = get_moisture()
+        print("M:"+str(s))    
+
+#----------------------------------- init start ------------------------------
 if isOLED:
     oledImage("octopus_image.pbm")
     time.sleep_ms(2500)
     oled.invert(0)
     oled.fill(0)                # reset display
-
-if isOLED:
     oled.text('octopusLAB', 0, 1)
-
+   
 if Debug: print("start - init")
 deviceID = str(get_eui())
-if Debug: print("> unique_id: "+ deviceID)
+print("> unique_id: " + deviceID)
+if last8dID: 
+    deviceID = deviceID[-8:]
+    print(">> last 8 bytes: " + deviceID)
 
 if isOLED:
     displMessage("version: "+ver,1)
@@ -365,6 +459,7 @@ if tslLight:
         tsl.integration_time(402)
     except:
         pass
+# ---        
 
 it = 0
 def timerSend():
@@ -377,84 +472,23 @@ def timerSend():
         sendData() # read sensors and send data
         it = 0
 
-if Debug: print("time setup >")
-rtc = machine.RTC() # real time
-urltime="http://www.octopusengine.org/api/hydrop/get-datetime.php"
-try:
-   response = urequests.get(urltime)
-   dt_str = (response.text+(",0,0")).split(",")
-   print(str(dt_str))
-   dt_int = [int(numeric_string) for numeric_string in dt_str]
-   rtc.init(dt_int)
-   print(str(rtc.datetime()))
-except:
-    print("Err. Setup time from WiFi")
+
+timeSetup()
+logDevice()
+sendData() # first test sending
 
 tim1 = Timer(0)
 tim1.init(period=10000, mode=Timer.PERIODIC, callback=lambda t:timerSend())
 
-sendData() # first test sending
-
-#log start > version
-try:
-    logVer =  int(float(ver)*100)
-    postdata_v = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, logVer,"log_ver")
-    res = urequests.post(urlPOST, data=postdata_v, headers=header)
-    time.sleep_ms(200)
-except:
-    displMessage("Err: send data",3)
-
-# ======================================= main loop ==========================
 if Debug:
     print('-' * 33)
     print("start - main loop")
-
+# ======================================= main loop ==========================
 while True:
-    displTime()
     wifi.handle_wifi()
-
-    #---light
-    if isLight:
-         try:
-            if bhLight:
-                numlux = sbh.luminance(BH1750.ONCE_HIRES_1)
-                print("BH:"+str(numlux))
-                displBar(yb0,int(math.log10(numlux)*2),300,1)
-
-            if bh2Light:
-                numlux = sbh2.luminance(BH1750.ONCE_HIRES_1)
-                print("BH AUX:"+str(numlux))
-
-            if tslLight:
-                numlux = tsl.read()
-                print("TSL:"+str(numlux))
-
-         except Exception as e:
-            print("Exception: {0}".format(e))
-            displMessage("Err: main LIGHT",2)
-
-    #---temperature
-    if isTemp:
-         try:
-            ds.convert_temp()
-            time.sleep_ms(750)
-            for t in ts:
-                temp = ds.read_temp(t)
-                tw = int(temp*10)
-                print("T({0}): {1}".format(bytearrayToHexString(t), str(tw/10)))
-                if isOLED:
-                    threeDigits(oled,tw,True,True)
-         except Exception as e:
-              print("Exception: {0}".format(e))
-              displMessage("Err: main TEMP",2)
-
-    #---AD input power voltage
-    if isAD:
-        adV = getADvolt(Debug)
-        displMessage("AD:"+str(adV),2) #only test
-
-    if isMois: #only test
-        s = get_moisture()
-        print("M:"+str(s))
+    timeDisplay()    
+    sensorsDisplay()
+    runAction()
 
     time.sleep_ms(500)
+    #TODO: if timer > sendData()
