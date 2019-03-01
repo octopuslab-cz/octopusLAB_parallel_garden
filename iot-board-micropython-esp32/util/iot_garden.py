@@ -20,13 +20,14 @@ pin_relay = Pin(pinout.RELAY_PIN, Pin.OUT)
 pin_fet = Pin(pinout.MFET_PIN, Pin.OUT)
 pwm_fet = PWM(pin_fet, 500, 0)
 
-
 # ---------------- procedures
 def getGardenLibVer():
-    print("garden lib.ver: 26.2.2019")
+    print("garden lib.ver: 28.2.2019")
 
 def getADvolt(Debug): # AD > volts?
-     an = adc.read()
+     an1 = adc.read()
+     an2 = adc.read()
+     an = int((an1+an2)/2)
      if Debug:
          print("> analog RAW: " + str(an))
          # TODO improve mapping formula, doc: https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/adc.html
@@ -46,6 +47,22 @@ def get_moisture():
     pwM.value(0)
     return(s)
 
+def fade_in(p, r, m):
+     # pin - range - multipl
+     for i in range(r):
+          p.value(0)
+          time.sleep_us((r-i)*m*2) # multH/L *2
+          p.value(1)
+          time.sleep_us(i*m)
+
+def fade_out(p, r, m):
+     # pin - range - multipl
+     for i in range(r):
+          p.value(1)
+          time.sleep_us((r-i)*m)
+          p.value(0)
+          time.sleep_us(i*m*2)    
+
 def demo_relay(number=2, delay=2000):
     for _ in range (0, number):
         pin_relay.value(1)
@@ -57,13 +74,13 @@ def demo_fet(duty, delay):
     pwm_fet.duty(duty)
     time.sleep_ms(delay)
 
-
 def demo_run():
     # Demo intensity
-    demo_fet(1, 2000)
-    demo_fet(128, 2000)
-    demo_fet(512, 2000)
-    demo_fet(1023, 2000)
+    delayF = 500
+    demo_fet(1, delayF)
+    demo_fet(128, delayF)
+    demo_fet(512, delayF)
+    demo_fet(1023, delayF)
     demo_fet(0, 2000)
 
     # demo Relay
