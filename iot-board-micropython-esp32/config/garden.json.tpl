@@ -12,6 +12,6 @@
 "mlight2": 0,
 "startlight": 8,
 "stoplight": 20,
-"pumpnodes": "6,14,22",
+"pumpnodes": [ 6, 14, 22 ],
 "pumpduration": 5
 }

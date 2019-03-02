@@ -81,8 +81,7 @@ try:
     startLight = iot_config.get('startlight')
     stopLight = iot_config.get('stoplight')
     pumpDurat = iot_config.get('pumpduration')
-    pumpNodes = iot_config.get('pumpnodes')
-    pumpNode =   pumpNodes.split(",")
+    pumpNode = iot_config.get('pumpnodes')
     #int(pumpNode[0])...
 
     isTemp = iot_config.get('mtemp')
