@@ -9,7 +9,7 @@ control:
 PWM LED and relay for pump
 """
 ver = "0.29" # int(*100) > db
-# last update 1.3.2019
+# last update 2.3.2019
 print('-' * 33)
 print("sensor_log.py - version: " + ver)
 
@@ -50,6 +50,9 @@ isMois = False      # moisture
 isAD = False        # AD input voltage
 isPH = False        # TODO  
 isPressure = False  # 
+prewLight = False
+prewRelay = False
+pumpStat = 0
 
 # Defaults - light sensors
 tslLight = False
@@ -63,6 +66,7 @@ rtc = machine.RTC() # real time
 
 print()
 iot_config = {}  # main system config - default/flash-json/web-cloud
+pumpNode = {}
 if Debug: print("load config >")
 try:
     with open('config/garden.json', 'r') as f:
@@ -76,6 +80,10 @@ try:
     runDemo = iot_config.get('rundemo')
     startLight = iot_config.get('startlight')
     stopLight = iot_config.get('stoplight')
+    pumpDurat = iot_config.get('pumpduration')
+    pumpNodes = iot_config.get('pumpnodes')
+    pumpNode =   pumpNodes.split(",")
+    #int(pumpNode[0])...
 
     isTemp = iot_config.get('mtemp')
     isLight = iot_config.get('mlight')
@@ -87,10 +95,12 @@ try:
         print('=' * 33)
         print("config version: " + str(confVer))
         print("place: " + place)
-        print("timeInterval: " + str(timeInterval))
-        print("run demo: " + str(runDemo))
-        print("start light: " + str(startLight))
-        print("stop light: " + str(stopLight))
+        print("timeInterval minutes: " + str(timeInterval))
+        print("run demo / test: " + str(runDemo))
+        print("start light - hour: " + str(startLight))
+        print("stop light - hour: " + str(stopLight))
+        print("pump hour nodes: " + str(pumpNode))
+        print("pump minute duration: " + str(pumpDurat))
         print('=' * 33)
 except:
         print("Err. or 'config/garden.json' does not exist")
@@ -334,12 +344,6 @@ def displBar(by,num,timb,anim):
     oled.show()
     time.sleep_ms(timb)
 
-def runAction():
-    hh=int(add0(rtc.datetime()[4]))
-    print("startL: "+ str(startLight) + " now:"+ str(hh))
-    if (hh > startLight):
-        print("ok - light on")
-
 def sensorsDisplay():
     #---light
     if isLight:
@@ -385,6 +389,56 @@ def sensorsDisplay():
         s = get_moisture()
         print("M:"+str(s))    
 
+def runAction():
+    # --- light
+    global prewLight, pumpStat
+
+    hh=int(add0(rtc.datetime()[4]))
+    mm=int(add0(rtc.datetime()[5]))
+
+    print(">=startL: "+ str(startLight) + " :: <stopL: " + str(stopLight) + " --- now:"+ str(hh))
+    if ((hh >= startLight) and (hh < stopLight)):
+        if prewLight:
+            print("> light on")
+            displMessage("light ON",1)
+        else:    
+            print("> light on START")
+            displMessage("light ON START",2)
+            #led_fet(1023, 2000) # max
+            led_fet(128, 2000)
+            prewLight = True 
+            
+            relay(1)
+            displMessage("relay ON",2)
+            time.sleep_ms(9000)
+            relay(0)
+            displMessage("relay OFF",1)
+
+    else: 
+        print("> light off") 
+        displMessage("light OFF",1)
+        led_fet(0, 2000) 
+        prewLight = False 
+    
+    # --- pump
+    dayM = hh*60 + mm
+    
+    for nodeM in pumpNode:
+        nodeMin = int(nodeM)*60
+        if Debug: print("dayMinutes: "+ str(dayM) + " :?: " + str(nodeMin) + " relay/pump Status: " + str(pumpStat))
+        # print(str(nodeMin))
+        if (dayM == nodeMin) and (pumpStat == 0):
+            print("relay ON")
+            displMessage("relay ON",1)
+            relay(1)
+            pumpStat = 1
+
+        if (dayM == nodeMin + pumpDurat) and (pumpStat == 1):
+            print("relay OFF")
+            displMessage("relay OFF",1) 
+            relay(0)
+            pumpStat = 0  
+
 #----------------------------------- init start ------------------------------
 if isOLED:
     oledImage("octopus_image.pbm")
@@ -409,10 +463,10 @@ if isAD:
     print()
 
 print('-' * 33)
-print(" --- d e m o --- start:")
+print("test --- d e m o --- start:")
 if runDemo:
     print("YES")
-    displMessage("RUN DEMO",1)
+    displMessage("run TEST",1)
     demo_run()
 else:
     print("NO")
@@ -472,7 +526,6 @@ def timerSend():
         sendData() # read sensors and send data
         it = 0
 
-
 timeSetup()
 logDevice()
 sendData() # first test sending
@@ -488,7 +541,8 @@ while True:
     wifi.handle_wifi()
     timeDisplay()    
     sensorsDisplay()
+    
+    time.sleep_ms(500)
     runAction()
 
-    time.sleep_ms(500)
     #TODO: if timer > sendData()
