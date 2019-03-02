@@ -66,7 +66,7 @@ rtc = machine.RTC() # real time
 
 print()
 iot_config = {}  # main system config - default/flash-json/web-cloud
-pumpNode = {}
+pumpNodes = {}
 if Debug: print("load config >")
 try:
     with open('config/garden.json', 'r') as f:
@@ -81,9 +81,8 @@ try:
     startLight = iot_config.get('startlight')
     stopLight = iot_config.get('stoplight')
     pumpDurat = iot_config.get('pumpduration')
-    pumpNode = iot_config.get('pumpnodes')
-    #int(pumpNode[0])...
-
+    pumpNodes = iot_config.get('pumpnodes')
+    
     isTemp = iot_config.get('mtemp')
     isLight = iot_config.get('mlight')
     isMois = iot_config.get('mmoist')
@@ -98,7 +97,7 @@ try:
         print("run demo / test: " + str(runDemo))
         print("start light - hour: " + str(startLight))
         print("stop light - hour: " + str(stopLight))
-        print("pump hour nodes: " + str(pumpNode))
+        print("pump hour nodes: " + str(pumpNodes))
         print("pump minute duration: " + str(pumpDurat))
         print('=' * 33)
 except:
@@ -384,9 +383,9 @@ def sensorsDisplay():
         adV = getADvolt(Debug)
         displMessage("AD:"+str(adV),2) #only test
 
-    if isMois: #only test
-        s = get_moisture()
-        print("M:"+str(s))    
+    # if isMois: #only test
+    #    s = get_moisture()
+    #   print("M:"+str(s))    
 
 def runAction():
     # --- light
@@ -415,14 +414,14 @@ def runAction():
 
     else: 
         print("> light off") 
-        displMessage("light OFF",1)
+        # displMessage("light OFF",1)
         led_fet(0, 2000) 
         prewLight = False 
     
     # --- pump
     dayM = hh*60 + mm
     
-    for nodeM in pumpNode:
+    for nodeM in pumpNodes:
         nodeMin = int(nodeM)*60
         if Debug: print("dayMinutes: "+ str(dayM) + " :?: " + str(nodeMin) + " relay/pump Status: " + str(pumpStat))
         # print(str(nodeMin))
@@ -464,11 +463,10 @@ if isAD:
 print('-' * 33)
 print("test --- d e m o --- start:")
 if runDemo:
-    print("YES")
     displMessage("run TEST",1)
     demo_run()
 else:
-    print("NO")
+    print("NO demo test")
 
 if isOLED:
     oled.text("wifi",99, 1)
