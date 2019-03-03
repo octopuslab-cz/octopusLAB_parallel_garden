@@ -1,7 +1,6 @@
 # this module is to setup your board
 # iotBoard for project parallel garden
 #
-
 import machine
 from machine import Pin, PWM, ADC
 import time, os, ubinascii
@@ -20,9 +19,11 @@ pin_relay = Pin(pinout.RELAY_PIN, Pin.OUT)
 pin_fet = Pin(pinout.MFET_PIN, Pin.OUT)
 pwm_fet = PWM(pin_fet, 500, 0)
 
-# ---------------- procedures
+ 
 def getGardenLibVer():
-    print("garden lib.ver: 28.2.2019")
+    return "garden lib.ver: 28.2.2019"
+
+# ----------------
 
 def getADvolt(Debug): # AD > volts?
      an1 = adc.read()
@@ -63,25 +64,28 @@ def fade_out(p, r, m):
           p.value(0)
           time.sleep_us(i*m*2)    
 
-def demo_relay(number=2, delay=2000):
+def relay(how):
+        pin_relay.value(how)
+
+def demo_relay(number=2, delay=3000):
     for _ in range (0, number):
-        pin_relay.value(1)
+        relay(1)
         time.sleep_ms(delay)
-        pin_relay.value(0)
+        relay(0)
         time.sleep_ms(delay)
 
-def demo_fet(duty, delay):
+def led_fet(duty, delay):
     pwm_fet.duty(duty)
     time.sleep_ms(delay)
 
 def demo_run():
     # Demo intensity
     delayF = 500
-    demo_fet(1, delayF)
-    demo_fet(128, delayF)
-    demo_fet(512, delayF)
-    demo_fet(1023, delayF)
-    demo_fet(0, 2000)
+    led_fet(1, delayF)
+    led_fet(128, delayF)
+    led_fet(512, delayF)
+    led_fet(1023, delayF)
+    led_fet(0, 2000)
 
     # demo Relay
-    demo_relay(delay=5000)
+    demo_relay(2,3000)
