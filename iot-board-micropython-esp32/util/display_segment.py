@@ -2,7 +2,7 @@
 
 aa = 16 # size
 y0 = 16 # position
-x0 = aa+5
+x0 = aa
 
 sevenSeg = [      #seven segment display
 #0,1,2,3,4,5,6
