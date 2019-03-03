@@ -8,16 +8,15 @@ sensors:
 control: 
 PWM LED and relay for pump
 """
-ver = "0.29" # int(*100) > db
-# last update 2.3.2019
+ver = "0.30" # int(*100) > db
+# last update 3.3.2019
 print('-' * 33)
 print("sensor_log.py - version: " + ver)
 
 import machine
 from machine import Pin, PWM, ADC, Timer
 import time, os, ubinascii
-import urequests, json
-import framebuf, math
+import urequests, json, math
 from lib import ssd1306
 from onewire import OneWire
 from ds18x20 import DS18X20
@@ -31,8 +30,9 @@ from util.wifi_connect import read_wifi_config, WiFiConnect
 from assets.icons9x9 import ICON_clr, ICON_wifi
 from util.octopus_lib import *
 from util.iot_garden import *
-getOctopusLibVer()
-getGardenLibVer()
+
+print(getOctopusLibVer())
+print(getGardenLibVer())
 
 Debug = True        # TODO: debugPrint()?
 place = "none"      # group of IoT > load from config/garden.json
@@ -62,6 +62,7 @@ bh2Light = False
 pinout = set_pinout()
 led = Pin(pinout.BUILT_IN_LED, Pin.OUT) # BUILT_IN_LED
 dspin = machine.Pin(pinout.ONE_WIRE_PIN)  # Dallas temperature
+button3 = machine.Pin(pinout.BUTT3_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
 rtc = machine.RTC() # real time
 
 print()
@@ -102,7 +103,7 @@ try:
         print('=' * 33)
 except:
         print("Err. or 'config/garden.json' does not exist")
-print("setup vector [ T L M A d ]:")
+print("setup vector [ Temp Light Moist Analog DallasOffset ]:")
 print(str(isTemp)+str(isLight)+str(isMois)+str(isAD)+str(tempoffset))        
 print()
 
@@ -128,20 +129,14 @@ if isOLED:
     oled = ssd1306.SSD1306_I2C(128, 64, i2c)
     time.sleep_ms(100)
 
-# aa = 16 # one segment size
 y0 = 7  # y possition
 x0 = aa-6
 xb0 = 0 # display bar possition
 yb0 = 58
 ydown = 57
+yup = 10
 xt = 88 # display time possition
 yt = 38
-
-def get_hhmm():
-    #print(str(rtc.datetime()[4])+":"+str(rtc.datetime()[5]))
-    hh=add0(rtc.datetime()[4])
-    mm=add0(rtc.datetime()[5])
-    return hh+":"+mm
 
 def draw_icon(icon, posx, posy):
     if not isOLED:
@@ -191,29 +186,6 @@ def w_connect():
     wifi_status = wifi.connect(wifi_config["wifi_ssid"], wifi_config["wifi_pass"])
     if Debug: print("WiFi: OK" if wifi_status else "WiFi: Error")
 
-def oledImage(file):
-    if not isOLED:
-        return
-
-    IMAGE_WIDTH = 63
-    IMAGE_HEIGHT = 63
-
-    with open('assets/'+file, 'rb') as f:
-        f.readline() # Magic number
-        f.readline() # Creator comment
-        f.readline() # Dimensions
-        data = bytearray(f.read())
-        fbuf = framebuf.FrameBuffer(data, IMAGE_WIDTH, IMAGE_HEIGHT, framebuf.MONO_HLSB)
-        # To display just blit it to the display's framebuffer (note you need to invert, since ON pixels are dark on a normal screen, light on OLED).
-        oled.invert(1)
-        oled.blit(fbuf, 0, 0)
-
-    oled.text("Octopus", 66,6)
-    oled.text("Lab", 82,16)
-    oled.text("Micro", 74,35)
-    oled.text("Python", 70,45)
-    oled.show()
-
 def blinkOledPoint():
     if not isOLED:
         return
@@ -226,7 +198,6 @@ def blinkOledPoint():
     oled.show()
     time.sleep_ms(2000)
 
-urlMain = "http://www.octopusengine.org/iot17/add19req.php?type=iot&place=pp&device="
 urlPOST = "http://www.octopusengine.org/iot17/add18.php"
 header = {}
 header["Content-Type"] = "application/x-www-form-urlencoded"
@@ -257,8 +228,7 @@ def timeSetup():
 def sendData():
     try:
         # GET >
-        #urlGET = urlMain + deviceID + "&type=temp1&value=" + str(tw)
-        #print(urlGET)
+        #urlGET = urlGet + "?device=" + deviceID + "&type=temp1&value=" + str(tw)
         #req = urequests.post(url)
         if isTemp:
             ds.convert_temp()
@@ -308,22 +278,10 @@ def timeDisplay():
         return
     try:
        oled.fill_rect(xt,yt,xt+50,yt+10,0)
-       oled.text(get_hhmm(), xt, yt)
+       oled.text(get_hhmm(rtc), xt, yt)
        oled.show()
     except Exception as e:
        print("timeDisplay() Exception: {0}".format(e))
-
-def displMessage(mess,timm):
-    if not isOLED:
-        return
-    try:
-        oled.fill_rect(0,ydown,128,10,0)
-        oled.text(mess, x0, ydown)
-        oled.show()
-        time.sleep_ms(timm*1000)
-    except Exception as e:
-       print("displMessage() Exception: {0}".format(e))
-
 
 def displBar(by,num,timb,anim):
     if not isOLED:
@@ -398,7 +356,7 @@ def runAction():
     if ((hh >= startLight) and (hh < stopLight)):
         if prewLight:
             print("> light on")
-            displMessage("light ON",1)
+            # displMessage("light ON",1)
         else:    
             print("> light on START")
             displMessage("light ON START",2)
@@ -411,6 +369,7 @@ def runAction():
             time.sleep_ms(9000)
             relay(0)
             displMessage("relay OFF",1)
+            displMessage(" ",1)
 
     else: 
         print("> light off") 
@@ -437,14 +396,62 @@ def runAction():
             relay(0)
             pumpStat = 0  
 
-#----------------------------------- init start ------------------------------
-if isOLED:
-    oledImage("octopus_image.pbm")
-    time.sleep_ms(2500)
-    oled.invert(0)
-    oled.fill(0)                # reset display
-    oled.text('octopusLAB', 0, 1)
-   
+def buttonCheck():
+    first3 = button3.value()    
+    time.sleep(0.01)
+    second3 = button3.value()
+    if first3 and not second3:
+        print('Button3 pressed!')
+    elif not first3 and second3:
+        print('Button3 released!')
+
+def oledStartImage():
+    if isOLED:
+        oledImage(oled, "octopus_image.pbm")
+        oled.text("Octopus", 65,6)
+        oled.text("Lab", 81,16)
+        oled.text("Parallel", 63,39)
+        oled.text("Garden", 69,49)
+        oled.show()
+        
+        time.sleep_ms(2500)
+        oled.invert(0)
+        oled.fill(0)                # reset display
+        oled.text('octopusLAB', 0, 1)
+
+def displMessage(mess,timm):
+    if not isOLED:
+        return
+    try:
+        oled.fill_rect(0,ydown,128,10,0)
+        oled.text(mess, x0, ydown)
+        oled.show()
+        time.sleep_ms(timm*1000)
+    except Exception as e:
+       print("displMessage() Exception: {0}".format(e))        
+
+def butt3Action(): 
+    if not isOLED:
+        return
+    try:
+        tim1.deinit()
+        oled.fill_rect(0,yup,128,64-yup,0) # clear
+        oled.text("> System info <", 3,12)
+        oled.text("UID8:"+deviceID, 3,23)
+        oled.text("place: "+place, 3,34)
+        oled.text("TLMA-d-"+str(isTemp)+str(isLight)+str(isMois)+str(isAD)+str(tempoffset), 5,45)
+        oled.text("> IOT-garden", 3,55)
+        oled.show()
+        time.sleep_ms(5000)
+        oled.fill_rect(0,yup,128,64-yup,0)
+        oled.show()
+        timerInit()    
+    except Exception as e:
+       print("butt3Action() Exception: {0}".format(e))           
+         
+#------------------------------- init start ------------------------------
+oledStartImage()
+
 if Debug: print("start - init")
 deviceID = str(get_eui())
 print("> unique_id: " + deviceID)
@@ -510,7 +517,7 @@ if tslLight:
         tsl.integration_time(402)
     except:
         pass
-# ---        
+# --- 
 
 it = 0
 def timerSend():
@@ -528,13 +535,17 @@ logDevice()
 sendData() # first test sending
 
 tim1 = Timer(0)
-tim1.init(period=10000, mode=Timer.PERIODIC, callback=lambda t:timerSend())
+def timerInit():
+    tim1.init(period=10000, mode=Timer.PERIODIC, callback=lambda t:timerSend())
+timerInit()
+displMessage("IoT",1)
 
 if Debug:
     print('-' * 33)
     print("start - main loop")
-# ======================================= main loop ==========================
+# ================================== main loop ==========================
 while True:
+    
     wifi.handle_wifi()
     timeDisplay()    
     sensorsDisplay()
@@ -542,4 +553,9 @@ while True:
     time.sleep_ms(500)
     runAction()
 
+    if not button3.value():
+        print("1 > butt3")
+        displMessage("Basic info >",2)
+        butt3Action()
+        
     #TODO: if timer > sendData()
