@@ -4,14 +4,14 @@ sensors:
 - SSD1306 OLED display
 - DS18B20 "Dallas" temperature sensor
 - BH1750 light sensor
-- moisture sensor
+- moisture sensor and next A/D (light/temp)
 control: 
 PWM LED and relay for pump
 """
 ver = "0.30" # int(*100) > db
 # last update 3.3.2019
-print('-' * 33)
-print("sensor_log.py - version: " + ver)
+print('-' * 30)
+print("[--- 1 ---] boot device >")
 
 import machine
 from machine import Pin, PWM, ADC, Timer
@@ -31,8 +31,13 @@ from assets.icons9x9 import ICON_clr, ICON_wifi
 from util.octopus_lib import *
 from util.iot_garden import *
 
+print("sensor_log.py - version: " + ver)
 print(getOctopusLibVer())
 print(getGardenLibVer())
+deviceID = str(get_eui())
+
+print('-' * 30)
+print("[--- 2 ---] init - variables and functions >")
 
 Debug = True        # TODO: debugPrint()?
 place = "none"      # group of IoT > load from config/garden.json
@@ -44,15 +49,22 @@ startLight = 12
 stopLight = 12
 
 # Defaults - sensors
-isTemp = False      # temperature
-isLight = False     # light (lux)
-isMois = False      # moisture
-isAD = False        # AD input voltage
-isPH = False        # TODO  
+isTemp = 0          # temperature
+isLight = 0         # light (lux)
+isMois = 0          # moisture
+isAD = 0            # AD input voltage
+isADL = 0           # AD photoresistor
+isADT = 0           # AD thermistor   
+isPH = 0            # TODO  
 isPressure = False  # 
 prewLight = False
 prewRelay = False
 pumpStat = 0
+confVer = 0         # config version 0.3>1
+timeInterval = 0
+runDemo = False
+pumpDurat = 0
+confUID = 0
 
 # Defaults - light sensors
 tslLight = False
@@ -65,31 +77,46 @@ dspin = machine.Pin(pinout.ONE_WIRE_PIN)  # Dallas temperature
 button3 = machine.Pin(pinout.BUTT3_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
 rtc = machine.RTC() # real time
 
-print()
 iot_config = {}  # main system config - default/flash-json/web-cloud
 pumpNodes = {}
-if Debug: print("load config >")
-try:
-    with open('config/garden.json', 'r') as f:
-        d = f.read()
-        f.close()
-        iot_config = json.loads(d)
-    if Debug: print("from garden.json:")
-    confVer = iot_config.get('version')
-    place = iot_config.get('place')
-    timeInterval = iot_config.get('timeinterval')
-    runDemo = iot_config.get('rundemo')
-    startLight = iot_config.get('startlight')
-    stopLight = iot_config.get('stoplight')
-    pumpDurat = iot_config.get('pumpduration')
-    pumpNodes = iot_config.get('pumpnodes')
-    
-    isTemp = iot_config.get('mtemp')
-    isLight = iot_config.get('mlight')
-    isMois = iot_config.get('mmoist')
-    isAD = iot_config.get('manalog')
-    tempoffset = int(iot_config.get('tempoffset'))
 
+def loadConfig():
+    global confVer, place, timeInterval, runDemo, startLight, stopLight, pumpDurat, pumpNodes
+    global confUID, Debug, last8dID, isTemp, isLight, isMois, isAD, isADL, isADT
+    
+    configFile = 'config/garden.json'
+    if Debug: print("load "+configFile+" >")
+    try:
+        with open(configFile, 'r') as f:
+            d = f.read()
+            f.close()
+            iot_config = json.loads(d)
+
+        confVer = iot_config.get('version')
+        place = iot_config.get('place')
+        confUID = iot_config.get('uid')
+        timeInterval = iot_config.get('timeinterval')
+        runDemo = iot_config.get('rundemo')
+        startLight = iot_config.get('startlight')
+        stopLight = iot_config.get('stoplight')
+        pumpDurat = iot_config.get('pumpduration')
+        pumpNodes = iot_config.get('pumpnodes')
+        Debug = iot_config.get('debug')
+        last8dID = iot_config.get('uid8')
+
+        isTemp = iot_config.get('mtemp') # m=measure temperature
+        isLight = iot_config.get('mlight')
+        isMois = iot_config.get('mmoist')
+        isAD = iot_config.get('manalog')
+        isADL = iot_config.get('manlight')
+        isADT = iot_config.get('mantemp')
+
+        tempoffset = int(iot_config.get('tempoffset'))
+
+    except:
+        print("Err. or 'config/garden.json' does not exist")
+
+def printConfig():
     if Debug:
         print('=' * 33)
         print("config version: " + str(confVer))
@@ -101,33 +128,9 @@ try:
         print("pump hour nodes: " + str(pumpNodes))
         print("pump minute duration: " + str(pumpDurat))
         print('=' * 33)
-except:
-        print("Err. or 'config/garden.json' does not exist")
-print("setup vector [ Temp Light Moist Analog DallasOffset ]:")
-print(str(isTemp)+str(isLight)+str(isMois)+str(isAD)+str(tempoffset))        
-print()
-
-if Debug: print("init i2c >")
-i2c = machine.I2C(-1, machine.Pin(pinout.I2C_SCL_PIN), machine.Pin(pinout.I2C_SDA_PIN))
-
-if Debug: print(" - scanning")
-i2cdevs = i2c.scan()
-
-if Debug: print(" - devices: {0}".format(i2cdevs))
-
-# Determine what we have connected to I2C
-isOLED = 0x3c in i2cdevs
-bhLight = 0x23 in i2cdevs
-bh2Light = 0x5c in i2cdevs
-tslLight = 0x39 in i2cdevs
-
-if Debug:
-    print("OLED present: {0}".format(isOLED))
-    print("Light meters\n  BH1730: {0}\n  BH1730 AUX: {1}\n  TSL2561: {2}".format(bhLight, bh2Light, tslLight))
-
-if isOLED:
-    oled = ssd1306.SSD1306_I2C(128, 64, i2c)
-    time.sleep_ms(100)
+        print("setup vector [ Temp Light Moist Analog AL AT DallasOffset ]:")
+        print(str(isTemp)+str(isLight)+str(isMois)+str(isAD)+str(isADL)+str(isADT)+str(tempoffset))        
+        print()  
 
 y0 = 7  # y possition
 x0 = aa-6
@@ -185,18 +188,6 @@ def w_connect():
     wifi.events_add_disconnected(disconnected_callback)
     wifi_status = wifi.connect(wifi_config["wifi_ssid"], wifi_config["wifi_pass"])
     if Debug: print("WiFi: OK" if wifi_status else "WiFi: Error")
-
-def blinkOledPoint():
-    if not isOLED:
-        return
-
-    oled.fill_rect(x0,y0,5,5,1)
-    oled.show()
-    time.sleep_ms(1000)
-
-    oled.fill_rect(x0,y0,5,5,0)
-    oled.show()
-    time.sleep_ms(2000)
 
 urlPOST = "http://www.octopusengine.org/iot17/add18.php"
 header = {}
@@ -349,8 +340,8 @@ def runAction():
     # --- light
     global prewLight, pumpStat
 
-    hh=int(add0(rtc.datetime()[4]))
-    mm=int(add0(rtc.datetime()[5]))
+    hh=int(rtc.datetime()[4])
+    mm=int(rtc.datetime()[5])
 
     print(">=startL: "+ str(startLight) + " :: <stopL: " + str(stopLight) + " --- now:"+ str(hh))
     if ((hh >= startLight) and (hh < stopLight)):
@@ -439,36 +430,66 @@ def butt3Action():
         oled.text("> System info <", 3,12)
         oled.text("UID8:"+deviceID, 3,23)
         oled.text("place: "+place, 3,34)
-        oled.text("TLMA-d-"+str(isTemp)+str(isLight)+str(isMois)+str(isAD)+str(tempoffset), 5,45)
-        oled.text("> IOT-garden", 3,55)
+        oled.text("FW-ver:"+ver, 3,45)        
+        oled.text("TLM/alt-"+str(isTemp)+str(isLight)+str(isMois)+"/"+str(isAD)+str(isADL)+str(isADT), 5,55)
+        #oled.text("> IOT-garden", 3,55)
         oled.show()
         time.sleep_ms(5000)
         oled.fill_rect(0,yup,128,64-yup,0)
         oled.show()
         timerInit()    
     except Exception as e:
-       print("butt3Action() Exception: {0}".format(e))           
-         
-#------------------------------- init start ------------------------------
-oledStartImage()
+       print("butt3Action() Exception: {0}".format(e))               
 
-if Debug: print("start - init")
-deviceID = str(get_eui())
+# ---------
 print("> unique_id: " + deviceID)
 if last8dID: 
     deviceID = deviceID[-8:]
     print(">> last 8 bytes: " + deviceID)
+print("(config:" + str(confUID) +")")
+
+# -------------------------- init > config -------------------------
+print('-' * 30)
+print("[---  3 ---] init - config >")
+loadConfig()
+printConfig()
+
+if Debug: print("init i2c >")
+i2c = machine.I2C(-1, machine.Pin(pinout.I2C_SCL_PIN), machine.Pin(pinout.I2C_SDA_PIN))
+
+if Debug: print(" - scanning")
+i2cdevs = i2c.scan()
+
+if Debug: print(" - devices: {0}".format(i2cdevs))
+
+# Determine what we have connected to I2C
+isOLED = 0x3c in i2cdevs
+bhLight = 0x23 in i2cdevs
+bh2Light = 0x5c in i2cdevs
+tslLight = 0x39 in i2cdevs
+
+if Debug:
+    print("OLED present: {0}".format(isOLED))
+    print("Light meters\n  BH1730: {0}\n  BH1730 AUX: {1}\n  TSL2561: {2}".format(bhLight, bh2Light, tslLight))
 
 if isOLED:
-    displMessage("version: "+ver,1)
-    time.sleep_ms(1500)
+    oled = ssd1306.SSD1306_I2C(128, 64, i2c)
+    time.sleep_ms(100)
+         
+#---------------------------- init > start -------------------------
+oledStartImage()
+if isOLED:
+    displMessage("version: "+ver,2)
 
-if isAD:
-    getADvolt(Debug)
-    print()
+print('-' * 30)
+print("[--- 4 ---] start - init sensors")
+print("setup vector [ Temp Light Moist / Analog AL AT DallasOffset ]:")
+print(str(isTemp)+str(isLight)+str(isMois)+"/"+str(isAD)+str(isADL)+str(isADT)+str(tempoffset))   
+
+# TODO
 
 print('-' * 33)
-print("test --- d e m o --- start:")
+print("[--- 5 ---] test / demo")
 if runDemo:
     displMessage("run TEST",1)
     demo_run()
@@ -519,7 +540,7 @@ if tslLight:
         pass
 # --- 
 
-it = 0
+it = 0 # every 10 sec.
 def timerSend():
     global it
     it = it+1
@@ -535,17 +556,16 @@ logDevice()
 sendData() # first test sending
 
 tim1 = Timer(0)
+
 def timerInit():
     tim1.init(period=10000, mode=Timer.PERIODIC, callback=lambda t:timerSend())
 timerInit()
 displMessage("IoT",1)
 
-if Debug:
-    print('-' * 33)
-    print("start - main loop")
+print('-' * 30)
+print("[--- 6 ---] start main loop >")
 # ================================== main loop ==========================
 while True:
-    
     wifi.handle_wifi()
     timeDisplay()    
     sensorsDisplay()
@@ -557,5 +577,11 @@ while True:
         print("1 > butt3")
         displMessage("Basic info >",2)
         butt3Action()
+
+    #test:
+    #if isADL:
+    #    adl = getAdL()
+    #    print("A/D Light RAW: " + str(adl)) 
+    #    displMessage("ADL: "+ str(adl),1)   
         
     #TODO: if timer > sendData()
