@@ -15,6 +15,12 @@ adcM = machine.ADC(pin_adcM)
 pin_adc = Pin(pinout.ANALOG_PIN, Pin.IN)
 adc = machine.ADC(pin_adc)
 
+pin_adcL = Pin(pinout.I34_PIN, Pin.IN)
+adcL = machine.ADC(pin_adcL)
+
+pin_adcT = Pin(pinout.I39_PIN, Pin.IN)
+adcT = machine.ADC(pin_adcT)
+
 pin_relay = Pin(pinout.RELAY_PIN, Pin.OUT)
 pin_fet = Pin(pinout.MFET_PIN, Pin.OUT)
 pwm_fet = PWM(pin_fet, 500, 0)
@@ -24,6 +30,11 @@ def getGardenLibVer():
     return "garden lib.ver: 28.2.2019"
 
 # ----------------
+def getAd2RAW(ani): # A/D RAW
+     an1 = ani.read()
+     an2 = ani.read()
+     an = int((an1+an2)/2)
+     return an
 
 def getADvolt(Debug): # AD > volts?
      an1 = adc.read()
@@ -34,6 +45,18 @@ def getADvolt(Debug): # AD > volts?
          # TODO improve mapping formula, doc: https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/adc.html
          print("volts: {0:.2f} V".format(an/4096*10.74), 20, 50)
      return an
+
+def getAdL(): # AD > light RAW
+     an = getAd2RAW(adcL)
+     #if Debug:
+     #    print("> analog AD RAW Light: " + str(an))
+     #TODO: calibration 2 lux?
+     return an
+
+def getAdT(): # AD > light RAW
+     an = getAd2RAW(adcL)
+     #TODO: calibration 2 Celsius?
+     return an     
 
 def get_moisture():
     pwM.value(1)
