@@ -76,6 +76,7 @@ led = Pin(pinout.BUILT_IN_LED, Pin.OUT) # BUILT_IN_LED
 dspin = machine.Pin(pinout.ONE_WIRE_PIN)  # Dallas temperature
 button3 = machine.Pin(pinout.BUTT3_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
 rtc = machine.RTC() # real time
+tim1 = Timer(0)     # for main 10 sec timer
 
 iot_config = {}  # main system config - default/flash-json/web-cloud
 pumpNodes = {}
@@ -202,6 +203,20 @@ def logDevice():
         time.sleep_ms(300)
     except:
         displMessage("Err: send data",3)
+
+it = 0 # every 10 sec.
+def timerSend():
+    global it
+    it = it+1
+    if Debug: print(">"+str(it))
+
+    if (it == 6*minute): # 6 = 1min / 60 = 10min
+        if Debug: print("10 min. > send data:")
+        sendData() # read sensors and send data
+        it = 0
+
+def timerInit():
+    tim1.init(period=10000, mode=Timer.PERIODIC, callback=lambda t:timerSend())         
 
 def timeSetup():
     if Debug: print("time setup >")
@@ -439,11 +454,13 @@ def butt3Action():
         oled.show()
         timerInit()    
     except Exception as e:
-       print("butt3Action() Exception: {0}".format(e))               
+       print("butt3Action() Exception: {0}".format(e)) 
+
+
 
 # -------------------------- init > config -------------------------
 print('-' * 30)
-print("[---  3 ---] init - config >")
+print("[--- 3 ---] init - config >")
 loadConfig()
 printConfig()
 
@@ -486,7 +503,7 @@ if isOLED:
 
 
 print('-' * 33)
-print("[--- 5 ---] test / demo")
+print("[--- 5 ---] demo action / wifi / test sensors")
 if runDemo:
     displMessage("run TEST",1)
     demo_run()
@@ -537,37 +554,29 @@ if tslLight:
         pass
 # --- 
 
-it = 0 # every 10 sec.
-def timerSend():
-    global it
-    it = it+1
-    if Debug: print(">"+str(it))
-
-    if (it == 6*minute): # 6 = 1min / 60 = 10min
-        if Debug: print("10 min. > send data:")
-        sendData() # read sensors and send data
-        it = 0
-
 timeSetup()
+
 logDevice()
-sendData() # first test sending
 
-tim1 = Timer(0)
+sendData() # first test sending data
 
-def timerInit():
-    tim1.init(period=10000, mode=Timer.PERIODIC, callback=lambda t:timerSend())
 timerInit()
+
 displMessage("IoT",1)
 
 print('-' * 30)
 print("[--- 6 ---] start main loop >")
 # ================================== main loop ==========================
 while True:
+
     wifi.handle_wifi()
+
     timeDisplay()    
+
     sensorsDisplay()
     
     time.sleep_ms(500)
+
     runAction()
 
     if not button3.value():
@@ -581,4 +590,4 @@ while True:
     #    print("A/D Light RAW: " + str(adl)) 
     #    displMessage("ADL: "+ str(adl),1)   
         
-    #TODO: if timer > sendData()
+    #TODO: if timerBool > sendData()
