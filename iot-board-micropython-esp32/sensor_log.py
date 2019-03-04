@@ -56,7 +56,7 @@ isAD = 0            # AD input voltage
 isADL = 0           # AD photoresistor
 isADT = 0           # AD thermistor   
 isPH = 0            # TODO  
-isPressure = False  # 
+isPressure = 0      # 
 prewLight = False
 prewRelay = False
 pumpStat = 0
@@ -441,18 +441,22 @@ def butt3Action():
     except Exception as e:
        print("butt3Action() Exception: {0}".format(e))               
 
-# ---------
+# -------------------------- init > config -------------------------
+print('-' * 30)
+print("[---  3 ---] init - config >")
+loadConfig()
+printConfig()
+
 print("> unique_id: " + deviceID)
 if last8dID: 
     deviceID = deviceID[-8:]
     print(">> last 8 bytes: " + deviceID)
 print("(config:" + str(confUID) +")")
 
-# -------------------------- init > config -------------------------
 print('-' * 30)
-print("[---  3 ---] init - config >")
-loadConfig()
-printConfig()
+print("[--- 4 ---] start - init sensors")
+print("setup vector [ Temp Light Moist / Analog AL AT DallasOffset ]:")
+print(str(isTemp)+str(isLight)+str(isMois)+"/"+str(isAD)+str(isADL)+str(isADT)+str(tempoffset))  
 
 if Debug: print("init i2c >")
 i2c = machine.I2C(-1, machine.Pin(pinout.I2C_SCL_PIN), machine.Pin(pinout.I2C_SDA_PIN))
@@ -476,17 +480,10 @@ if isOLED:
     oled = ssd1306.SSD1306_I2C(128, 64, i2c)
     time.sleep_ms(100)
          
-#---------------------------- init > start -------------------------
 oledStartImage()
 if isOLED:
     displMessage("version: "+ver,2)
 
-print('-' * 30)
-print("[--- 4 ---] start - init sensors")
-print("setup vector [ Temp Light Moist / Analog AL AT DallasOffset ]:")
-print(str(isTemp)+str(isLight)+str(isMois)+"/"+str(isAD)+str(isADL)+str(isADT)+str(tempoffset))   
-
-# TODO
 
 print('-' * 33)
 print("[--- 5 ---] test / demo")
