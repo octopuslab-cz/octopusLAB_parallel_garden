@@ -17,5 +17,14 @@ CAM_RESOLUTION=800x600
 # Colour of bottom info banner
 # CAM_BANNER_COLOUR=#AARRGGBB
 
+# Text colour
+CAM_TEXT_COLOUR=#FFFFFF
+
+# Line colour
+CAM_LINE_COLOUR=#FF0000
+
 # Optional extra text
 # CAM_INFO_TEXT=
+
+# Extra parameters for fswebcam (such as --rotate)
+# FSCAM_EXTRA_PARAMS=
