@@ -7,7 +7,7 @@ debug() {
 }
 
 debug "Get picture from camera"
-fswebcam -r "${CAM_RESOLUTION}" --info "${CAM_INFO_TEXT}" --font "${CAM_FONT}" --banner-colour "${CAM_BANNER_COLOUR}" --text-colour ${CAM_TEXT_COLOUR} --line-colour ${CAM_LINE_COLOUR} /tmp/temp.jpg
+fswebcam -r "${CAM_RESOLUTION}" --info "${CAM_INFO_TEXT}" --font "${CAM_FONT}" --banner-colour "${CAM_BANNER_COLOUR}" --text-colour ${CAM_TEXT_COLOUR} --line-colour ${CAM_LINE_COLOUR} ${FSCAM_EXTRA_PARAMS} /tmp/temp.jpg
 
 [ ! -e "/tmp/temp.jpg" ] && echo "Error while getting picture" >&2 && exit 1
 
