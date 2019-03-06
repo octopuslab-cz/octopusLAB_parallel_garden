@@ -8,7 +8,7 @@ sensors:
 control: 
 PWM LED and relay for pump
 """
-ver = "0.30" # int(*100) > db
+ver = "0.31" # int(*100) > db
 # last update 3.3.2019
 print('-' * 30)
 print("[--- 1 ---] boot device >")
@@ -65,6 +65,8 @@ timeInterval = 0
 runDemo = False
 pumpDurat = 0
 confUID = 0
+cloudConfig = False
+cloudUpdate = False
 
 # Defaults - light sensors
 tslLight = False
@@ -79,11 +81,12 @@ rtc = machine.RTC() # real time
 tim1 = Timer(0)     # for main 10 sec timer
 
 iot_config = {}  # main system config - default/flash-json/web-cloud
+url_config = {}
 pumpNodes = {}
 
 def loadConfig():
     global confVer, place, timeInterval, runDemo, startLight, stopLight, pumpDurat, pumpNodes
-    global confUID, Debug, last8dID, isTemp, isLight, isMois, isAD, isADL, isADT
+    global confUID, Debug, last8dID, isTemp, isLight, isMois, isAD, isADL, isADT, cloudConfig, cloudUpdate
     
     configFile = 'config/garden.json'
     if Debug: print("load "+configFile+" >")
@@ -114,20 +117,48 @@ def loadConfig():
 
         tempoffset = int(iot_config.get('tempoffset'))
 
+        cloudConfig = iot_config.get('cloudconfig')
+        cloudUpdate = iot_config.get('cloudupdate')
+
     except:
         print("Err. or 'config/garden.json' does not exist")
 
+def loadCloudConfig():
+    global url_config
+    print("--- load Cloud Config >")
+    try:
+        response = urequests.get(urlConf)
+        url_config = json.loads(response.text)
+        print(str(url_config))
+    except:
+        print("Err.loadCloudConfig() - connect? json exist?")     
+
+def changeConfig(): # once / no save
+    global confVer, place, timeInterval, runDemo, startLight, stopLight, pumpDurat, pumpNodes
+    print("--- change Config() >")
+    try:
+        startLight = url_config.get('startlight')
+        stopLight = url_config.get('stoplight')
+        pumpDurat = url_config.get('pumpduration')
+        pumpNodes = url_config.get('pumpnodes')
+    except:
+        print("Err.changeConfig() - bad json?")              
+    
 def printConfig():
     if Debug:
         print('=' * 33)
         print("config version: " + str(confVer))
         print("place: " + place)
         print("timeInterval minutes: " + str(timeInterval))
-        print("run demo / test: " + str(runDemo))
+        print('-' * 33)
         print("start light - hour: " + str(startLight))
         print("stop light - hour: " + str(stopLight))
         print("pump hour nodes: " + str(pumpNodes))
         print("pump minute duration: " + str(pumpDurat))
+        print('=' * 33)
+        print("run demo / test: " + str(runDemo))
+        print("cloudConfig: " + str(cloudConfig))
+        print("cloudUpdate: " + str(cloudUpdate))        
         print('=' * 33)
         print("setup vector [ Temp Light Moist Analog AL AT DallasOffset ]:")
         print(str(isTemp)+str(isLight)+str(isMois)+str(isAD)+str(isADL)+str(isADT)+str(tempoffset))        
@@ -190,7 +221,6 @@ def w_connect():
     wifi_status = wifi.connect(wifi_config["wifi_ssid"], wifi_config["wifi_pass"])
     if Debug: print("WiFi: OK" if wifi_status else "WiFi: Error")
 
-urlPOST = "http://www.octopusengine.org/iot17/add18.php"
 header = {}
 header["Content-Type"] = "application/x-www-form-urlencoded"
 
@@ -220,7 +250,7 @@ def timerInit():
 
 def timeSetup():
     if Debug: print("time setup >")
-    urltime="http://www.octopusengine.org/api/hydrop/get-datetime.php"
+    urltime=urlApi+"/get-datetime.php"
     try:
         response = urequests.get(urltime)
         dt_str = (response.text+(",0,0")).split(",")
@@ -365,9 +395,8 @@ def runAction():
             # displMessage("light ON",1)
         else:    
             print("> light on START")
-            displMessage("light ON START",2)
-            #led_fet(1023, 2000) # max
-            led_fet(128, 2000)
+            displMessage("light ON START",2) 
+            led_fet(1023, 2000) # 1023 # max 255=1/4 512=1/2 ...
             prewLight = True 
             
             relay(1)
@@ -376,7 +405,6 @@ def runAction():
             relay(0)
             displMessage("relay OFF",1)
             displMessage(" ",1)
-
     else: 
         print("> light off") 
         # displMessage("light OFF",1)
@@ -385,7 +413,7 @@ def runAction():
     
     # --- pump
     dayM = hh*60 + mm
-    
+    #try 
     for nodeM in pumpNodes:
         nodeMin = int(nodeM)*60
         if Debug: print("dayMinutes: "+ str(dayM) + " :?: " + str(nodeMin) + " relay/pump Status: " + str(pumpStat))
@@ -400,7 +428,9 @@ def runAction():
             print("relay OFF")
             displMessage("relay OFF",1) 
             relay(0)
-            pumpStat = 0  
+            pumpStat = 0
+    #except:
+    #    print("runAction() > ERR.pump")              
 
 def buttonCheck():
     first3 = button3.value()    
@@ -434,24 +464,42 @@ def displMessage(mess,timm):
         oled.show()
         time.sleep_ms(timm*1000)
     except Exception as e:
-       print("displMessage() Exception: {0}".format(e))        
+       print("displMessage() Exception: {0}".format(e)) 
 
+def oledInfoMess(imm,tim):
+    oled.fill_rect(0,yup,128,64-yup,0) # clear 
+    oled.text(imm[0], 3,12)
+    oled.text(imm[1], 3,23)
+    oled.text(imm[2], 3,34)
+    oled.text(imm[3], 3,45)        
+    oled.text(imm[4], 5,55) 
+    oled.show() 
+    time.sleep_ms(tim)
+    oled.fill_rect(0,yup,128,64-yup,0) 
+
+imm = {}
 def butt3Action(): 
     if not isOLED:
         return
     try:
         tim1.deinit()
-        oled.fill_rect(0,yup,128,64-yup,0) # clear
-        oled.text("> System info <", 3,12)
-        oled.text("UID8:"+deviceID, 3,23)
-        oled.text("place: "+place, 3,34)
-        oled.text("FW-ver:"+ver, 3,45)        
-        oled.text("TLM/alt-"+str(isTemp)+str(isLight)+str(isMois)+"/"+str(isAD)+str(isADL)+str(isADT), 5,55)
+        
+        imm[0] = "> System info <"
+        imm[1] = "UID8:"+deviceID
+        imm[2] = "place: "+place
+        imm[3] = "FW-ver:"+ver        
+        imm[4] = "TLM/alt-"+str(isTemp)+str(isLight)+str(isMois)+"/"+str(isAD)+str(isADL)+str(isADT)
         #oled.text("> IOT-garden", 3,55)
-        oled.show()
-        time.sleep_ms(5000)
-        oled.fill_rect(0,yup,128,64-yup,0)
-        oled.show()
+        oledInfoMess(imm,5000)
+
+        imm[0] = ">     2/2     <"
+        imm[1] = "Light: "+str(startLight)+" > "+str(stopLight)
+        imm[2] = "Pump: "+str(pumpNodes)
+        imm[3] = "P.durat: "+str(pumpDurat)        
+        imm[4] = "TLM/alt-"+str(isTemp)+str(isLight)+str(isMois)+"/"+str(isAD)+str(isADL)+str(isADT)
+        #oled.text("> IOT-garden", 3,55)
+        oledInfoMess(imm,5000)
+
         timerInit()    
     except Exception as e:
        print("butt3Action() Exception: {0}".format(e)) 
@@ -469,6 +517,11 @@ if last8dID:
     deviceID = deviceID[-8:]
     print(">> last 8 bytes: " + deviceID)
 print("(config:" + str(confUID) +")")
+
+# url config: TODO > extern.
+urlApi ="http://www.octopusengine.org/api/hydrop/"
+urlConf = urlApi + "/config/" + deviceID + ".json" 
+urlPOST = "http://www.octopusengine.org/iot17/add18.php"
 
 print('-' * 30)
 print("[--- 4 ---] start - init sensors")
@@ -555,13 +608,15 @@ if tslLight:
 # --- 
 
 timeSetup()
-
 logDevice()
 
+if  cloudConfig:
+    loadCloudConfig()
+    changeConfig()
+    printConfig()
+
 sendData() # first test sending data
-
 timerInit()
-
 displMessage("IoT",1)
 
 print('-' * 30)
