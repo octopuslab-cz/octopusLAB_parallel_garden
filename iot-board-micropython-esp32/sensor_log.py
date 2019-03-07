@@ -14,7 +14,7 @@ print('-' * 30)
 print("[--- 1 ---] boot device >")
 
 import machine
-from machine import Pin, PWM, ADC, Timer
+from machine import Pin, PWM, ADC, UART, Timer
 import time, os, ubinascii
 import urequests, json, math
 from lib import ssd1306
@@ -67,6 +67,7 @@ pumpDurat = 0
 confUID = 0
 cloudConfig = False
 cloudUpdate = False
+cloudConfigDynamic = True
 
 # Defaults - light sensors
 tslLight = False
@@ -79,6 +80,7 @@ dspin = machine.Pin(pinout.ONE_WIRE_PIN)  # Dallas temperature
 button3 = machine.Pin(pinout.BUTT3_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
 rtc = machine.RTC() # real time
 tim1 = Timer(0)     # for main 10 sec timer
+uart1 = UART(1, 9600)
 
 iot_config = {}  # main system config - default/flash-json/web-cloud
 url_config = {}
@@ -262,6 +264,12 @@ def timeSetup():
         print("Err. Setup time from WiFi")
 
 def sendData():
+    try:
+        if cloudConfigDynamic:
+            loadCloudConfig()
+    except:
+        print("Err.cloudConfigDynamic")       
+
     try:
         # GET >
         #urlGET = urlGet + "?device=" + deviceID + "&type=temp1&value=" + str(tw)
@@ -464,7 +472,7 @@ def displMessage(mess,timm):
         oled.show()
         time.sleep_ms(timm*1000)
     except Exception as e:
-       print("displMessage() Exception: {0}".format(e)) 
+       print("Err. displMessage() Exception: {0}".format(e)) 
 
 def oledInfoMess(imm,tim):
     oled.fill_rect(0,yup,128,64-yup,0) # clear 
@@ -502,8 +510,20 @@ def butt3Action():
 
         timerInit()    
     except Exception as e:
-       print("butt3Action() Exception: {0}".format(e)) 
+       print("Err. butt3Action() Exception: {0}".format(e)) 
 
+sr =""
+def serialControl():
+    print("> serial control:")
+    try:
+        # uart1.write('C')
+        sr = uart1.read()
+        print(sr)        
+    except Exception as e:
+       print("Err. serialControl() Exception: {0}".format(e)) 
+
+    if sr == "c": # print config file
+        printConfig()       
 
 
 # -------------------------- init > config -------------------------
@@ -638,6 +658,8 @@ while True:
         print("1 > butt3")
         displMessage("Basic info >",2)
         butt3Action()
+
+    # serialControl()    
 
     #test:
     #if isADL:
