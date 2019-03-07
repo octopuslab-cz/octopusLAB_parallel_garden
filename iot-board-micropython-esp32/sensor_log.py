@@ -47,6 +47,7 @@ last8dID = True     # for db only 8 bytes device ID
 tempoffset = 0      # hard correction of bad dallas
 startLight = 12
 stopLight = 12
+lightIntensity = 1023
 
 # Defaults - sensors
 isTemp = 0          # temperature
@@ -87,7 +88,7 @@ url_config = {}
 pumpNodes = {}
 
 def loadConfig():
-    global confVer, place, timeInterval, runDemo, startLight, stopLight, pumpDurat, pumpNodes
+    global confVer, place, timeInterval, runDemo, startLight, stopLight, lightIntensity, pumpDurat, pumpNodes
     global confUID, Debug, last8dID, isTemp, isLight, isMois, isAD, isADL, isADT, cloudConfig, cloudUpdate
     
     configFile = 'config/garden.json'
@@ -105,6 +106,7 @@ def loadConfig():
         runDemo = iot_config.get('rundemo')
         startLight = iot_config.get('startlight')
         stopLight = iot_config.get('stoplight')
+        lightIntensity = iot_config.get('lightintensity')
         pumpDurat = iot_config.get('pumpduration')
         pumpNodes = iot_config.get('pumpnodes')
         Debug = iot_config.get('debug')
@@ -136,28 +138,31 @@ def loadCloudConfig():
         print("Err.loadCloudConfig() - connect? json exist?")     
 
 def changeConfig(): # once / no save
-    global confVer, place, timeInterval, runDemo, startLight, stopLight, pumpDurat, pumpNodes
+    global confVer, place, timeInterval, runDemo, startLight, stopLight, lightIntensity, pumpDurat, pumpNodes
     print("--- change Config() >")
     try:
         startLight = url_config.get('startlight')
         stopLight = url_config.get('stoplight')
+        lightIntensity = url_config.get('lightintensity')
         pumpDurat = url_config.get('pumpduration')
-        pumpNodes = url_config.get('pumpnodes')
+        # pumpNodes = url_config.get('pumpnodes')
     except:
         print("Err.changeConfig() - bad json?")              
     
 def printConfig():
     if Debug:
+        print()
         print('=' * 33)
         print("config version: " + str(confVer))
         print("place: " + place)
         print("timeInterval minutes: " + str(timeInterval))
-        print('-' * 33)
+        print('-' * 12)
         print("start light - hour: " + str(startLight))
         print("stop light - hour: " + str(stopLight))
+        print("light intensity: " + str(lightIntensity))
         print("pump hour nodes: " + str(pumpNodes))
         print("pump minute duration: " + str(pumpDurat))
-        print('=' * 33)
+        print('=' * 12)
         print("run demo / test: " + str(runDemo))
         print("cloudConfig: " + str(cloudConfig))
         print("cloudUpdate: " + str(cloudUpdate))        
@@ -265,8 +270,10 @@ def timeSetup():
 
 def sendData():
     try:
-        if cloudConfigDynamic:
+        if  cloudConfigDynamic:
             loadCloudConfig()
+            changeConfig()
+            printConfig()
     except:
         print("Err.cloudConfigDynamic")       
 
@@ -404,7 +411,7 @@ def runAction():
         else:    
             print("> light on START")
             displMessage("light ON START",2) 
-            led_fet(1023, 2000) # 1023 # max 255=1/4 512=1/2 ...
+            led_fet(lightIntensity, 2000) # 1023 # max 255=1/4 512=1/2 ...
             prewLight = True 
             
             relay(1)
@@ -502,9 +509,9 @@ def butt3Action():
 
         imm[0] = ">     2/2     <"
         imm[1] = "Light: "+str(startLight)+" > "+str(stopLight)
-        imm[2] = "Pump: "+str(pumpNodes)
-        imm[3] = "P.durat: "+str(pumpDurat)        
-        imm[4] = "TLM/alt-"+str(isTemp)+str(isLight)+str(isMois)+"/"+str(isAD)+str(isADL)+str(isADT)
+        imm[2] = "intensity: "+str(lightIntensity)
+        imm[3] = "Pump: "+str(pumpNodes)
+        imm[4] = "P.durat: "+str(pumpDurat)        
         #oled.text("> IOT-garden", 3,55)
         oledInfoMess(imm,5000)
 
@@ -645,13 +652,9 @@ print("[--- 6 ---] start main loop >")
 while True:
 
     wifi.handle_wifi()
-
-    timeDisplay()    
-
+    timeDisplay()
     sensorsDisplay()
-    
     time.sleep_ms(500)
-
     runAction()
 
     if not button3.value():
