@@ -6,12 +6,10 @@ sensors:
 - BH1750 light sensor
 - moisture sensor and next A/D (light/temp)
 control: 
-PWM LED and relay for pump
+PWM LED and relay for water pump
 """
 ver = "0.31" # int(*100) > db
 # last update 3.3.2019
-print('-' * 30)
-print("[--- 1 ---] boot device >")
 
 import machine
 from machine import Pin, PWM, ADC, UART, Timer
@@ -31,13 +29,14 @@ from assets.icons9x9 import ICON_clr, ICON_wifi
 from util.octopus_lib import *
 from util.iot_garden import *
 
+printLog(1,"boot device >")
+
 print("sensor_log.py - version: " + ver)
 print(getOctopusLibVer())
 print(getGardenLibVer())
 deviceID = str(get_eui())
 
-print('-' * 30)
-print("[--- 2 ---] init - variables and functions >")
+printLog(2,"init - variables and functions >")
 
 Debug = True        # TODO: debugPrint()?
 place = "none"      # group of IoT > load from config/garden.json
@@ -48,6 +47,7 @@ tempoffset = 0      # hard correction of bad dallas
 startLight = 12
 stopLight = 12
 lightIntensity = 1023
+oldLightIntensity = 1023
 
 # Defaults - sensors
 isTemp = 0          # temperature
@@ -398,7 +398,7 @@ def sensorsDisplay():
 
 def runAction():
     # --- light
-    global prewLight, pumpStat
+    global prewLight, pumpStat, oldLightIntensity
 
     hh=int(rtc.datetime()[4])
     mm=int(rtc.datetime()[5])
@@ -408,18 +408,25 @@ def runAction():
         if prewLight:
             print("> light on")
             # displMessage("light ON",1)
+            if (oldLightIntensity != lightIntensity):
+                led_fet(lightIntensity, 2000)
+                displMessage("light:" + str(lightIntensity),1)                
+                oldLightIntensity = lightIntensity
+                print("change intensity: "+ str(lightIntensity))
+
         else:    
             print("> light on START")
             displMessage("light ON START",2) 
             led_fet(lightIntensity, 2000) # 1023 # max 255=1/4 512=1/2 ...
             prewLight = True 
+            oldLightIntensity = lightIntensity
             
-            relay(1)
-            displMessage("relay ON",2)
-            time.sleep_ms(9000)
-            relay(0)
-            displMessage("relay OFF",1)
-            displMessage(" ",1)
+            #relay(1)
+            #displMessage("relay ON",2)
+            #time.sleep_ms(9000)
+            #relay(0)
+            #displMessage("relay OFF",1)
+            #displMessage(" ",1)
     else: 
         print("> light off") 
         # displMessage("light OFF",1)
@@ -533,9 +540,9 @@ def serialControl():
         printConfig()       
 
 
-# -------------------------- init > config -------------------------
-print('-' * 30)
-print("[--- 3 ---] init - config >")
+# ----------------------- init > config ----------------------
+printLog(3,"init - config >")
+
 loadConfig()
 printConfig()
 
@@ -550,8 +557,8 @@ urlApi ="http://www.octopusengine.org/api/hydrop/"
 urlConf = urlApi + "/config/" + deviceID + ".json" 
 urlPOST = "http://www.octopusengine.org/iot17/add18.php"
 
-print('-' * 30)
-print("[--- 4 ---] start - init sensors")
+printLog(4,"start - init sensors >")
+
 print("setup vector [ Temp Light Moist / Analog AL AT DallasOffset ]:")
 print(str(isTemp)+str(isLight)+str(isMois)+"/"+str(isAD)+str(isADL)+str(isADT)+str(tempoffset))  
 
@@ -582,8 +589,8 @@ if isOLED:
     displMessage("version: "+ver,2)
 
 
-print('-' * 33)
-print("[--- 5 ---] demo action / wifi / test sensors")
+printLog(5,"demo action / wifi / test sensors >")
+
 if runDemo:
     displMessage("run TEST",1)
     demo_run()
@@ -646,16 +653,15 @@ sendData() # first test sending data
 timerInit()
 displMessage("IoT",1)
 
-print('-' * 30)
-print("[--- 6 ---] start main loop >")
-# ================================== main loop ==========================
+printLog(6,"start main loop >")
+# ============================= main loop ==========================
 while True:
 
     wifi.handle_wifi()
     timeDisplay()
-    sensorsDisplay()
-    time.sleep_ms(500)
     runAction()
+    time.sleep_ms(500)
+    sensorsDisplay()    
 
     if not button3.value():
         print("1 > butt3")
