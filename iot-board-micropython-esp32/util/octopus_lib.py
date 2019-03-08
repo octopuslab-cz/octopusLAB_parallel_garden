@@ -9,7 +9,12 @@ import framebuf
 
 # ---------------- procedures
 def getOctopusLibVer():
-    return "octopus lib.ver: 3.3.2019"
+    return "octopus lib.ver: 8.3.2019"
+
+def printLog(i,s):
+    print()
+    print('-' * 30)
+    print("[--- " + str(i) + " ---] " + s)    
 
 def bytearrayToHexString(ba):
     return ''.join('{:02X}'.format(x) for x in ba)
@@ -28,6 +33,15 @@ def get_hhmm(rtc):
     hh=add0(rtc.datetime()[4])
     mm=add0(rtc.datetime()[5])
     return hh+":"+mm 
+
+def blinkOledPoint(oled):
+    oled.fill_rect(x0,y0,5,5,1)
+    oled.show()
+    time.sleep_ms(1000)
+
+    oled.fill_rect(x0,y0,5,5,0)
+    oled.show()
+    time.sleep_ms(2000)
 
 def oledImage(oled, file):
 
