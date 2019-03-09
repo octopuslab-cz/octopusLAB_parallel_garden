@@ -141,10 +141,13 @@ def changeConfig(): # once / no save
     global confVer, place, timeInterval, runDemo, startLight, stopLight, lightIntensity, pumpDurat, pumpNodes
     print("--- change Config() >")
     try:
-        startLight = url_config.get('startlight')
-        stopLight = url_config.get('stoplight')
-        lightIntensity = url_config.get('lightintensity')
-        pumpDurat = url_config.get('pumpduration')
+        if(url_config.get('startlight') != None):
+            startLight = url_config.get('startlight')
+            stopLight = url_config.get('stoplight')
+            lightIntensity = url_config.get('lightintensity')
+            pumpDurat = url_config.get('pumpduration')
+        else:
+            print("Off-line -> url_config.Null")    
         # pumpNodes = url_config.get('pumpnodes')
     except:
         print("Err.changeConfig() - bad json?")              
