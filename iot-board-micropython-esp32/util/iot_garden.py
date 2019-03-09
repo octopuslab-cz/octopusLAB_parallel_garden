@@ -71,7 +71,7 @@ def get_moisture():
     pwM.value(0)
     return(s)
 
-def fade_in(p, r, m):
+def fade_in_sw(p, r, m):
      # pin - range - multipl
      for i in range(r):
           p.value(0)
@@ -79,13 +79,38 @@ def fade_in(p, r, m):
           p.value(1)
           time.sleep_us(i*m)
 
-def fade_out(p, r, m):
+def fade_out_sw(p, r, m):
      # pin - range - multipl
      for i in range(r):
           p.value(1)
           time.sleep_us((r-i)*m)
           p.value(0)
-          time.sleep_us(i*m*2)    
+          time.sleep_us(i*m*2) 
+
+def fade_in(r, m=5, fmax = 3000):
+     # duty max - multipl us (2=2us) - fmax
+     f = 100
+     rs = 35
+
+     pwm_fet.freq(f)
+     pwm_fet.duty(1)
+     time.sleep_ms(rs*2)
+
+     pwm_fet.duty(5)
+     time.sleep_ms(rs)
+
+     for i in range(5,rs):
+          pwm_fet.duty(i)
+          pwm_fet.freq(f)
+          time.sleep_ms(m*(rs-i+1))
+          f += int(fmax/rs) 
+
+     pwm_fet.freq(fmax)
+     for i in range(rs, r):
+          pwm_fet.duty(i)
+          time.sleep_ms(m)  
+
+     print("ok")                
 
 def relay(how):
         pin_relay.value(how)
