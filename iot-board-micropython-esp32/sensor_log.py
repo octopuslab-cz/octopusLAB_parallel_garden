@@ -417,7 +417,8 @@ def runAction():
         else:    
             print("> light on START")
             displMessage("light ON START",2) 
-            led_fet(lightIntensity, 2000) # 1023 # max 255=1/4 512=1/2 ...
+            # led_fet(lightIntensity, 2000) # 1023 # max 255=1/4 512=1/2 ...
+            fade_in(lightIntensity)
             prewLight = True 
             oldLightIntensity = lightIntensity
             
