@@ -9,12 +9,15 @@ import framebuf
 
 # ---------------- procedures
 def getOctopusLibVer():
-    return "octopus lib.ver: 8.3.2019"
+    return "octopus lib.ver: 10.3.2019"
 
 def printLog(i,s):
     print()
     print('-' * 30)
-    print("[--- " + str(i) + " ---] " + s)    
+    print("[--- " + str(i) + " ---] " + s)  
+
+def map(x, in_min, in_max, out_min, out_max):
+    return int((x-in_min) * (out_max-out_min) / (in_max-in_min) + out_min)      
 
 def bytearrayToHexString(ba):
     return ''.join('{:02X}'.format(x) for x in ba)
@@ -59,3 +62,22 @@ def oledImage(oled, file):
         oled.blit(fbuf, 0, 0)
         
     oled.show()
+
+def displBarSlimH(oled,val,ybh = 11): # horizontal    
+    xbh = 3
+    maxbv = 120
+    oled.hline(xbh,ybh,maxbv,0)
+    for ix in range(40):
+        oled.fill_rect(xbh+ix*3,ybh,1,1,1)
+    oled.hline(xbh,ybh,val,1) 
+    oled.show() 
+
+def displBarSlimV(oled, val, xbv = 0): # vertical 2 / 125
+    ybv = 10
+    maxbv = 21    
+    oled.vline(xbv,ybv,maxbv,0)
+    for iy in range(7):
+        oled.fill_rect(xbv+1,ybv+iy*3,1,1,1)
+
+    oled.vline(xbv,ybv,val,1) 
+    oled.show() 
