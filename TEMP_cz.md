@@ -22,7 +22,7 @@ ale pro hrubý monitoring, že se teplota držela v hrubých mezích (10-30st? s
 - Světlo
 
 I2C senzor BH1750 zatím vypadá dobře
-bude zase záležet na přesném umístění senzoru - ideální by bylo mít ve všech boxech na stejném mísě
+bude zase záležet na přesném umístění senzoru - ideální by bylo mít ve všech boxech na stejném místě
 
 - Vlhkost
 
