@@ -41,7 +41,7 @@ Zkusíme vyvinout vlastní hrubý konduktometr, bylo by možné ho osadit do vš
 
 - Průtokoměr
 
-asi také osadíme jen v jdnom boxu - mohlo by se sledovat, že třba klesá průtok? zanášení čerpadla? a pod
+asi také osadíme jen v jednom boxu - mohlo by se sledovat, že třba klesá průtok? zanášení čerpadla? a pod
 
 
 ## Verze 2 /12V (1902) - na desce v2
