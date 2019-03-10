@@ -57,7 +57,7 @@ přidáváme Relé a upravený MOS-FET
 
 - relé 
 
-spíná oběhové čerpadlo - šlo by nahradid PWM (plánujeme do verze 3)
+spíná oběhové čerpadlo - šlo by nahradit PWM (plánujeme do verze 3)
 
 
 - PWM
