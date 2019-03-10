@@ -2,6 +2,10 @@
 
 teplota / vlhkost / osvětlení
 
+použito pouze v PP1 (1812)
+
+http://www.octopusengine.org/api/hydrop/?sel=place&place=PP1&limit=3000
+
 ## monitoring - stávající a chystané
 
 - Teplota: 
@@ -37,6 +41,11 @@ asi také osadíme jen v jdnom boxu - mohlo by se sledovat, že třba klesá pr�
 
 # Verze 2 (12V) - na desce v2
 
+testováno (1902) v octopusLAB a určeno do prvních 5-6 mini interiérových 3x3 boxů
+
+http://www.octopusengine.org/api/hydrop/?sel=place&place=octopus1&limit=3000
+
+
 ## akce:
 
 přidáváme Relé a upravený MOS-FET
@@ -57,6 +66,16 @@ odlasit krabičku, konektory a pod
 
 ## todo1903:
 
-db rozšířit na delší ID / nebo použijeme druhou osmici (po druhé PP sklizni)
+- frontend:
+experimenty s reactem, možná i Google data a Grafana?
 
-testovat čerpadlo i na PWM > verze 3 by mohla mít jen 3x PWM FET
+- webové setup rozhraní
+
+alfa:
+https://www.octopusengine.org/api/hydrop/setup.php
+
+
+
+x) db rozšířit na delší ID / nebo použijeme druhou osmici (po druhé PP sklizni)
+
+- otestovat čerpadlo i na PWM > verze 3 by mohla mít jen 3x PWM FET
