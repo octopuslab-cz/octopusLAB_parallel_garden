@@ -19,17 +19,37 @@ aby se čidlo elektrolýzou brzy nezničilo, zapínáme jen po dobu měření
 - měří se napětí vestavěným A/D převodníkem
 čidlo měří poměrně nepřesně - je tam hodně šumu, měříme proto po sobě tři hodnoty a posíláme až jejich průměr 
 
+PH:
+
+Zatím jen v laboratorních podmínkách jednoho boxu v octopusLAB
+
+
+Konduktivita:
+
+Zkusíme vyvinout vlastní hrubý konduktometr, bylo by možné ho osadit do všech boxů, když bude levný, jednoduchý, stabilní a dávat relevantní hodnoty v přijatelném rozmezí
+
+
 # Verze 2 (12V) - na desce v2
 
 ## akce:
 
 přidáváme Relé a upravený MOS-FET
-relé: spíná oběhové čerpadlo - šlo by nahradid PWM (plánujeme do verze 3)
+
+relé: 
+
+spíná oběhové čerpadlo - šlo by nahradid PWM (plánujeme do verze 3)
+
 
 MOS-FET spíná PWM (pulsní modulace) Led pásek
 
+# Verze 3 - 
 
-## todo1902:
+HW: ? samostatná GARDEN-board, 3x PWM, specifická čidla přímo přopojitelná, možná jen známka ESP? SMD ledky a pod
+použitelná jsko IoT - vyráběná již osazená?
+
+odlasit krabičku, konektory a pod
+
+## todo1903:
 
 db rozšířit na delší ID / nebo použijeme druhou osmici (po druhé PP sklizni)
 
