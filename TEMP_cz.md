@@ -3,11 +3,11 @@
 semi-public "report" - todo - issues
 
 
-## Verze 1 - na desce v1
+## Verze 1 (1812) - na desce v1
 
 teplota / vlhkost / osvětlení
 
-použito pouze v PP1 (1812)
+použito pouze v PP1 
 
 http://www.octopusengine.org/api/hydrop/?sel=place&place=PP1&limit=3000
 
@@ -44,9 +44,9 @@ Zkusíme vyvinout vlastní hrubý konduktometr, bylo by možné ho osadit do vš
 asi také osadíme jen v jdnom boxu - mohlo by se sledovat, že třba klesá průtok? zanášení čerpadla? a pod
 
 
-## Verze 2 (12V) - na desce v2
+## Verze 2 /12V (1902) - na desce v2
 
-testováno (1902) v octopusLAB a určeno do prvních 5-6 mini interiérových 3x3 boxů
+testováno v octopusLAB a určeno do prvních 5-6 mini interiérových 3x3 boxů
 
 http://www.octopusengine.org/api/hydrop/?sel=place&place=octopus1&limit=3000
 
