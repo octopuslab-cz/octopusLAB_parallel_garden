@@ -1,32 +1,38 @@
 # Verze 1 - na desce v1
 
-## monitoring
+teplota / vlhkost / osvětlení
 
-Teplota: 
+## monitoring - stávající a chystané
+
+- Teplota: 
 
 Dallas čidlo - čínské várky umějí být hodně nepovedené
 některé mají jen posun (většinou o 1-2 st dolů) 
 ale pro hrubý monitoring, že se teplota držela v hrubých mezích (10-30st? s přesností 1-2?) dostačující
 
-Světlo:
+- Světlo:
 
 I2C senzor BH1750 zatím vypadá dobře
 bude zase záležet na přesném umístění senzoru - ideální by bylo mít ve všech boxech na stejném mísě
 
-Vlhkost:
+- Vlhkost:
 
 aby se čidlo elektrolýzou brzy nezničilo, zapínáme jen po dobu měření
-- měří se napětí vestavěným A/D převodníkem
+měří se napětí vestavěným A/D převodníkem
 čidlo měří poměrně nepřesně - je tam hodně šumu, měříme proto po sobě tři hodnoty a posíláme až jejich průměr 
 
-PH:
+- PH:
 
 Zatím jen v laboratorních podmínkách jednoho boxu v octopusLAB
 
 
-Konduktivita:
+- Konduktivita:
 
 Zkusíme vyvinout vlastní hrubý konduktometr, bylo by možné ho osadit do všech boxů, když bude levný, jednoduchý, stabilní a dávat relevantní hodnoty v přijatelném rozmezí
+
+- Průtokoměr
+
+asi také osadíme jen v jdnom boxu - mohlo by se sledovat, že třba klesá průtok? zanášení čerpadla? a pod
 
 
 # Verze 2 (12V) - na desce v2
