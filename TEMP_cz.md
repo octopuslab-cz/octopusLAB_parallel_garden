@@ -1,4 +1,9 @@
-# Verze 1 - na desce v1
+# Parallel garden IT
+
+semi-public "report" - todo - issues
+
+
+## Verze 1 - na desce v1
 
 teplota / vlhkost / osvětlení
 
@@ -39,7 +44,7 @@ Zkusíme vyvinout vlastní hrubý konduktometr, bylo by možné ho osadit do vš
 asi také osadíme jen v jdnom boxu - mohlo by se sledovat, že třba klesá průtok? zanášení čerpadla? a pod
 
 
-# Verze 2 (12V) - na desce v2
+## Verze 2 (12V) - na desce v2
 
 testováno (1902) v octopusLAB a určeno do prvních 5-6 mini interiérových 3x3 boxů
 
@@ -57,7 +62,7 @@ spíná oběhové čerpadlo - šlo by nahradid PWM (plánujeme do verze 3)
 
 MOS-FET spíná PWM (pulsní modulace) Led pásek
 
-# Verze 3 - 
+## Verze 3 - 
 
 HW: ? samostatná GARDEN-board, 3x PWM, specifická čidla přímo přopojitelná, možná jen známka ESP? SMD ledky a pod
 použitelná jsko IoT - vyráběná již osazená?
