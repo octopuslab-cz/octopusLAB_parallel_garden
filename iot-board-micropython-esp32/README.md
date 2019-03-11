@@ -50,11 +50,11 @@ config/garden.json
     "debug": 1,
     "uid": "3ac5167c",  // hw device ID
     "place": "orasol",  // place or group of devices
-    "timeinterval": 10, // every 10 min - default
+    "timeinterval": 10, // [minutes] -> every 10 min - default
     "rundemo": 0,       // automatic start-up test 
     "tempoffset": -1,
     
-    "mtemp": 1,         // set sensors/devices: on/off
+    "mtemp": 1,         // set sensors/devices: on/off [1/0]
     "mlight": 1,
     "mmoist": 1,
     "manalog": 0,
@@ -62,15 +62,16 @@ config/garden.json
     "mantemp": 0,
     "mlight2": 0,
     
-    "startlight": 9,    // light on (time: hour) 
-    "stoplight": 18,    // light off (time: hour)
+    "startlight": 9,    // light on, time: [hour] 
+    "stoplight": 18,    // light off, time: [hour]
     "lightintensity": 500,
     "pumpnodes": [ 7, 15, 22 ],
-    "pumpduration": 3,
+    "pumpduration": 3,  // [minutes]
+    
     "uid8": 1,
-    "cloudconfig": 1,
-    "cloudconfdynam": 1,
-    "cloudupdate": 1
+    "cloudconfig": 1,   // once load
+    "cloudconfdynam": 1,// load every timeinterval
+    "cloudupdate": 1    // update FW - prepare
 }
 </pre>
 
