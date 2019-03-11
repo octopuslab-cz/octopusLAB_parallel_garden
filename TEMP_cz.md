@@ -86,3 +86,8 @@ https://www.octopusengine.org/api/hydrop/setup.php
 x) db rozšířit na delší ID / nebo použijeme druhou osmici (po druhé PP sklizni)
 
 - otestovat čerpadlo i na PWM > verze 3 by mohla mít jen 3x PWM FET
+
+- Cloud upgrade?
+
+Zařízení ve verzi HW 2.0 (FW 0.32)  je tak, jak je a touto funkcí zatím nedisponuje. Předpokládáme, že odladíme řízení a nastavení cyklů a že už po nějakou dobu nebude nutné dělat zásadnější změny (nezajímají nás certifikáty nebo dynamicky připojitelná další senzory) 
+Ale jakmile to uPy důstojněji umožní, můžeme zaimplementovat.. možnost je to mít v C "mimo" nebo využít RPi jako nadřízený PC, který by to mohl lokálně zvládnout - otestujeme, ale asi nenasadíme (nespolehlivost, zranitelnost..)
