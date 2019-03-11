@@ -1,6 +1,6 @@
 # Parallel garden IT
 
-semi-public "report" - todo - issues
+semi-public "report" - todo - issues (jen text - struktura / reports)
 
 
 ## Verze 1 (1812) - na desce v1
