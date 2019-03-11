@@ -15,6 +15,7 @@ import machine
 from machine import Pin, PWM, ADC, UART, Timer
 import time, os, ubinascii
 import urequests, json, math
+from urandom import randint
 from lib import ssd1306
 from onewire import OneWire
 from ds18x20 import DS18X20
@@ -41,12 +42,19 @@ printLog(2,"init - variables and functions >")
 Debug = True        # TODO: debugPrint()?
 place = "none"      # group of IoT > load from config/garden.json
 minute = 10         # 1/10 for data send
-wifi_retries = 100  # for wifi connecting
 last8dID = True     # for db only 8 bytes device ID
-tempoffset = 0      # hard correction of bad dallas
+wifi_retries = 100  # for wifi connecting
+
+# hard-code config / daefault
+timeInterval = 10
+tempoffset = 0      # hard correction of err/wrong dallas
 startLight = 12
 stopLight = 12
+cloudConfig = False
+cloudUpdate = False
+cloudConfigDynamic = True
 lightIntensity = 1023
+
 oldLightIntensity = 1023
 
 # Defaults - sensors
@@ -62,13 +70,10 @@ prewLight = False
 prewRelay = False
 pumpStat = 0
 confVer = 0         # config version 0.3>1
-timeInterval = 0
+
 runDemo = False
 pumpDurat = 0
 confUID = 0
-cloudConfig = False
-cloudUpdate = False
-cloudConfigDynamic = True
 
 # Defaults - light sensors
 tslLight = False
@@ -176,8 +181,6 @@ def printConfig():
 
 y0 = 7  # y possition
 x0 = aa-6
-xb0 = 0 # display bar possition
-yb0 = 58
 ydown = 57
 yup = 10
 xt = 88 # display time possition
@@ -315,6 +318,9 @@ def sendData():
 
         if isMois:
             sM = get_moisture()
+            if   isOLED:
+                valmap = map(sM, 0, 4050, 0, 126)
+                displBarSlimH(oled, valmap, 11)
             postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(sM)),"mois1")
             res = urequests.post(urlPOST, data=postdata_l, headers=header)
 
@@ -337,23 +343,6 @@ def timeDisplay():
     except Exception as e:
        print("timeDisplay() Exception: {0}".format(e))
 
-def displBar(by,num,timb,anim):
-    if not isOLED:
-        return
-
-    if num>10: num = 10
-    oled.fill_rect(xb0,by-1,128,5+2,0) # clear
-    for i in range(10):               # 0
-        oled.hline(xb0+i*13,by+2,9,1)
-    if num > 0:
-      for i in range(num):               # 1
-        oled.fill_rect(xb0+i*13,by,10,5,1)
-        if anim:
-           oled.show()
-           time.sleep_ms(30) # animation
-    oled.show()
-    time.sleep_ms(timb)
-
 def sensorsDisplay():
     #---light
     if isLight:
@@ -361,7 +350,7 @@ def sensorsDisplay():
             if bhLight:
                 numlux = sbh.luminance(BH1750.ONCE_HIRES_1)
                 print("BH:"+str(numlux))
-                displBar(yb0,int(math.log10(numlux)*2),300,1)
+                if isOLED: displBar(oled, int(math.log10(numlux)*2),300,1)
 
             if bh2Light:
                 numlux = sbh2.luminance(BH1750.ONCE_HIRES_1)
@@ -425,12 +414,6 @@ def runAction():
             prewLight = True 
             oldLightIntensity = lightIntensity
             
-            #relay(1)
-            #displMessage("relay ON",2)
-            #time.sleep_ms(9000)
-            #relay(0)
-            #displMessage("relay OFF",1)
-            #displMessage(" ",1)
     else: 
         print("> light off") 
         # displMessage("light OFF",1)
@@ -492,17 +475,6 @@ def displMessage(mess,timm):
     except Exception as e:
        print("Err. displMessage() Exception: {0}".format(e)) 
 
-def oledInfoMess(imm,tim):
-    oled.fill_rect(0,yup,128,64-yup,0) # clear 
-    oled.text(imm[0], 3,12)
-    oled.text(imm[1], 3,23)
-    oled.text(imm[2], 3,34)
-    oled.text(imm[3], 3,45)        
-    oled.text(imm[4], 5,55) 
-    oled.show() 
-    time.sleep_ms(tim)
-    oled.fill_rect(0,yup,128,64-yup,0) 
-
 imm = {}
 def butt3Action(): 
     if not isOLED:
@@ -516,7 +488,7 @@ def butt3Action():
         imm[3] = "FW-ver:"+ver        
         imm[4] = "TLM/alt-"+str(isTemp)+str(isLight)+str(isMois)+"/"+str(isAD)+str(isADL)+str(isADT)
         #oled.text("> IOT-garden", 3,55)
-        oledInfoMess(imm,5000)
+        oledInfoMess(oled,imm,5000)
 
         imm[0] = ">     2/2     <"
         imm[1] = "Light: "+str(startLight)+" > "+str(stopLight)
@@ -524,7 +496,7 @@ def butt3Action():
         imm[3] = "Pump: "+str(pumpNodes)
         imm[4] = "P.durat: "+str(pumpDurat)        
         #oled.text("> IOT-garden", 3,55)
-        oledInfoMess(imm,5000)
+        oledInfoMess(oled,imm,5000)
 
         timerInit()    
     except Exception as e:
@@ -541,8 +513,7 @@ def serialControl():
        print("Err. serialControl() Exception: {0}".format(e)) 
 
     if sr == "c": # print config file
-        printConfig()       
-
+        printConfig()    
 
 # ----------------------- init > config ----------------------
 printLog(3,"init - config >")
@@ -592,11 +563,28 @@ oledStartImage()
 if isOLED:
     displMessage("version: "+ver,2)
 
+# ------------------------fast test --------------------------
+#displBarSlimV(oled,3)
+#displBarSlimV(oled,5,0)
+#threeDigits(oled,123,True,True)
+for _ in range(5):
+    randval = randint(1, 4000)
+    valmap = map(randval, 0, 4000, 0, 125)
+    displBarSlimH(oled, valmap, 11) # 0-120 / y
+    time.sleep_ms(300)
+
+if isOLED: displBarSlimH(oled, 0, 11)       
+# ---/f
 
 printLog(5,"demo action / wifi / test sensors >")
 
 if runDemo:
-    displMessage("run TEST",1)
+    displMessage("test LIGHT&PUMP",1)
+    for _ in range(9):
+        randval = randint(1, 4000)
+        valmap = map(randval, 0, 4000, 0, 125)
+        displBarSlimH(oled, valmap, 11) # 0-120 / y
+        time.sleep_ms(300)
     demo_run()
 else:
     print("NO demo test")
@@ -664,7 +652,7 @@ while True:
     wifi.handle_wifi()
     timeDisplay()
     runAction()
-    time.sleep_ms(500)
+    time.sleep_ms(300)
     sensorsDisplay()    
 
     if not button3.value():
