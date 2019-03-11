@@ -87,7 +87,7 @@ def fade_out_sw(p, r, m):
           p.value(0)
           time.sleep_us(i*m*2) 
 
-def fade_in(r, m=5, fmax = 3000):
+def fade_in(r, m = 5, fmax = 3000):
      # duty max - multipl us (2=2us) - fmax
      f = 100
      rs = 35
@@ -127,13 +127,16 @@ def led_fet(duty, delay):
     time.sleep_ms(delay)
 
 def demo_run():
+    fade_in(1024)
     # Demo intensity
-    delayF = 500
-    led_fet(1, delayF)
-    led_fet(128, delayF)
-    led_fet(512, delayF)
-    led_fet(1023, delayF)
-    led_fet(0, 2000)
+    # delayF = 500
+    # led_fet(128, delayF)
+    # led_fet(1023, delayF)
 
     # demo Relay
-    demo_relay(2,3000)
+    demo_relay(2,5000)
+
+    led_fet(0, 1000)
+    
+    
+  

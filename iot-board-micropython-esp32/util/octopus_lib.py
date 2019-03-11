@@ -63,11 +63,38 @@ def oledImage(oled, file):
         
     oled.show()
 
+def oledInfoMess(oled, imm, tim, yup = 10):    
+    oled.fill_rect(0,yup,128,64-yup,0) # clear 
+    oled.text(imm[0], 3,12)
+    oled.text(imm[1], 3,23)
+    oled.text(imm[2], 3,34)
+    oled.text(imm[3], 3,45)        
+    oled.text(imm[4], 5,55) 
+    oled.show() 
+    time.sleep_ms(tim)
+    oled.fill_rect(0,yup,128,64-yup,0)     
+
+def displBar(oled, num, timb, anim, by = 58):
+    xb0 = 0 # display bar possition
+   
+    if num>10: num = 10
+    oled.fill_rect(xb0,by-1,128,5+2,0) # clear
+    for i in range(10):               # 0
+        oled.hline(xb0+i*13,by+2,9,1)
+    if num > 0:
+      for i in range(num):               # 1
+        oled.fill_rect(xb0+i*13,by,10,5,1)
+        if anim:
+           oled.show()
+           time.sleep_ms(30) # animation
+    oled.show()
+    time.sleep_ms(timb)    
+
 def displBarSlimH(oled,val,ybh = 11): # horizontal    
-    xbh = 3
-    maxbv = 120
+    xbh = 2
+    maxbv = 126
     oled.hline(xbh,ybh,maxbv,0)
-    for ix in range(40):
+    for ix in range(42):
         oled.fill_rect(xbh+ix*3,ybh,1,1,1)
     oled.hline(xbh,ybh,val,1) 
     oled.show() 
