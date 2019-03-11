@@ -46,17 +46,31 @@ I35_PIN = 35     # analog in for moisture
 <pre>
 config/garden.json
 {
-"version": 1,          // version of json config file
-"place": "testjson",   // place or group of devices
-"timeinterval":10,     // very 10 min - default
-"rundemo": 0,          // automatic start-up test 
-"mtemp": 1,
-"mlight": 1,
-"mmoist": 1,
-"manalog": 0,
-"mlight2": 0,
-"startlight": 10,     // light on (time: hour) 
-"stoplight": 22       // light off (=)
+    "version": 1,       // version of json config file
+    "debug": 1,
+    "uid": "3ac5167c",  // hw device ID
+    "place": "orasol",  // place or group of devices
+    "timeinterval": 10, // every 10 min - default
+    "rundemo": 0,       // automatic start-up test 
+    "tempoffset": -1,
+    
+    "mtemp": 1,         // set sensors/devices: on/off
+    "mlight": 1,
+    "mmoist": 1,
+    "manalog": 0,
+    "manlight": 0,
+    "mantemp": 0,
+    "mlight2": 0,
+    
+    "startlight": 9,    // light on (time: hour) 
+    "stoplight": 18,    // light off (time: hour)
+    "lightintensity": 500,
+    "pumpnodes": [ 7, 15, 22 ],
+    "pumpduration": 3,
+    "uid8": 1,
+    "cloudconfig": 1,
+    "cloudconfdynam": 1,
+    "cloudupdate": 1
 }
 </pre>
 
