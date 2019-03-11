@@ -3,9 +3,9 @@
 semi-public "report" - todo - issues (jen text - struktura / reports)
 
 
-## Verze 1 (1812) - na desce v1
+## HW Verze 1 (1812) - na desce v1
 
-teplota / vlhkost / osvětlení
+teplota / vlhkost / osvětlení (aktuální FW 0.3) zatíme není potřeba další
 
 použito pouze v PP1 
 
@@ -45,6 +45,8 @@ asi také osadíme jen v jednom boxu - mohlo by se sledovat, že třba klesá pr
 
 
 ## Verze 2 /12V (1902) - na desce v2
+
+aktuální připravovaná verze FW: 0.32 (půjde nejspíš i do produkce pro první kousky boxů)
 
 testováno v octopusLAB a určeno do prvních 5-6 mini interiérových 3x3 boxů
 
