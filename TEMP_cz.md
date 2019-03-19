@@ -83,8 +83,8 @@ experimenty s reactem, možná i Google data a Grafana?
 alfa:
 https://www.octopusengine.org/api/hydrop/setup.php
 
-Todo | Edition
------ | ---------
+Todo                                                                               |    Edition
+---------------------------------------------------------------------------------- | --------------
 - [x] db rozšířit na delší ID / nebo použijeme druhou osmici (po druhé PP sklizni) | Ho
 - [x] Vláďa - frontend | Ho / Vl
 - [x] nová vestavěná krabička - Karel K. | Ho
