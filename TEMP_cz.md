@@ -84,7 +84,7 @@ alfa:
 https://www.octopusengine.org/api/hydrop/setup.php
 
 Todo | Edition
---------------
+----- | ---------
 
 - [x] db rozšířit na delší ID / nebo použijeme druhou osmici (po druhé PP sklizni) | Ho
 - [x] Vláďa - frontend | Ho / Vl
