@@ -19,7 +19,7 @@ with #IoTboart (octopusLAB)
 
 (7) frontend ? grafana
 
-(8) others
+(8) AI / ML / future... > https://github.com/octopusengine/octopusLAB_parallel_garden/tree/master/ai-ml-future
 
 (9) android app >> https://github.com/octopusengine/octopusLAB_parallel_garden/tree/master/android-app
 
