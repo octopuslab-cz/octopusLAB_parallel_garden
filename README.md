@@ -15,7 +15,7 @@ with #IoTboart (octopusLAB)
 
 (5) server-db ? grafana
 
-(6) frontend - react >>
+(6) frontend - react >> https://github.com/octopusengine/octopusLAB_parallel_garden/tree/master/frontend
 
 (7) frontend ? grafana
 
