@@ -1,0 +1,1 @@
+Stručný popis - temp
