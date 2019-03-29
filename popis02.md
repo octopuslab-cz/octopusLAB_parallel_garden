@@ -9,4 +9,7 @@ z monitorovací verze iot-garden-01 vznikla nová verze 02
 
 verze pro geeky - prozatím bez profi konektorů, kabeláže
 
+technický popis: https://github.com/octopusengine/octopusLAB_parallel_garden/blob/temp_cz/TEMP_cz.md
+
+
 
