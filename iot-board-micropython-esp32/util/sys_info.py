@@ -1,6 +1,7 @@
 
 # from util.sys_info import sys_info
 # sys_info()
+# 2019/03
 
 import machine
 import os, ubinascii
@@ -29,14 +30,36 @@ def sys_info():
    #print("--- MAC: "+str(mac2eui(get_eui())))
    print("> uPy version: "+str(os.uname()[3]))
    #print("> octopus() ver: " + ver)
+
+   print("[device]")
    try:
         with open('config/device.json', 'r') as f:
             d = f.read()
             f.close()
-            print("> config/device: " + d)
+            print(" > config/device: " + d)
             # device_config = json.loads(d)
    except:
         print("Device config 'config/device.json' does not exist, please run setup()")
+   
+   print("[wifi]")
+   try:
+        with open('config/wifi.json', 'r') as f:
+            d = f.read()
+            f.close()
+            print(" > config/wifi: " + d)          
+   except:
+        print("'config/wifi.json' does not exist")
+   
+   print("[mqtt]")
+   try:
+        with open('config/mqtt.json', 'r') as f:
+            d = f.read()
+            f.close()
+            print(" > config/mqtt: " + d)
+   except:
+        print("'config/mqtt.json' does not exist")
+
+   print()
 
    gc.collect()
    print("> mem_free: "+str(gc.mem_free()))
@@ -46,3 +69,6 @@ def sys_info():
    print("> active variables:")
    print(dir())
    print("> datetime RAW: "+str(rtc.datetime()))
+
+   wait = input(" >> Press ENTER to continue")
+   
