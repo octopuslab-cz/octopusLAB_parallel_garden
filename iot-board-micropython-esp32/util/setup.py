@@ -7,6 +7,8 @@ import time, uos
 import ujson
 import machine #datetime
 
+ver = "2019/04 (c)octopusLAB"
+
 devices = [
 ["oLAB Default","esp32"],
 ["oLAB Witty","esp8266"],
@@ -17,6 +19,21 @@ devices = [
 ["oLAB IoTBoard1","esp8266"],
 ["oLAB IoTBoard1","esp32"]
 ]
+
+octopuASCII = [
+"      ,'''`.",
+"     /      \ ",
+"     |(@)(@)|",
+"     )      (",
+"    /,'))((`.\ ",
+"   (( ((  )) ))",
+"   )  \ `)(' / ( ",
+]
+
+def mainOctopus():
+    for ol in octopuASCII:
+        print(str(ol))
+    print()
 
 def deploy(url):
     import sys
@@ -61,20 +78,33 @@ def setupMenu():
     print("[ds]  - device setting")
     print("[sw]  - set wifi")
     print("[cw]  - connect wifi")
+    print("[mq]  - set mqtt")
     print("[st]  - set time")
-    print("[sd]  - system download >")
+    print("[sdp]  - system download > petrkr")
+    print("[sdo]  - system download > octopus")
     print("(initial octopus modules)")
     print("[si]  - system info")
+    print("[o]   - run octopus() demo")
     print("[e]   - exit setup")
 
     print('=' * 30)
     sel = input("select: ")
     return sel
 
+def shutil(): 
+    print("System download > (initial octopus modules)")
+    import upip
+    print("Installing shutil")
+    upip.install("micropython-shutil")
+    print("Running deploy")
+       
+
 def setup():
+    mainOctopus()
     print("Hello, this will help you initialize your ESP")
+    print(ver)
     print("Press Ctrl+C to abort")
-    print()
+    
 
     # TODO improve this
     # prepare directory
@@ -143,6 +173,24 @@ def setup():
               w.connect(wifi_config["wifi_ssid"], wifi_config["wifi_pass"])
               print("WiFi: OK")
 
+        if sele == "mq":
+            print("Set mqtt >")
+            print()
+            mq = {}
+            mq['mqtt_broker_ip'] = input("BROKER IP: ")
+            mq['mqtt_ssl'] = input("> SSL (0/1): ")
+            mq['mqtt_port'] = input("> PORT (1883/8883/?): ")
+            mq['mqtt_clientid_prefix'] = input("CLIENT PREFIX: ")
+            mq['mqtt_root_topic'] = input("ROOT TOPIC: ")
+
+            # TODO improve this
+            if 'config' not in uos.listdir():
+                uos.makedirs('config')
+
+            print("Writing to file config/mqtt.json")
+            with open('config/mqtt.json', 'w') as f:
+                ujson.dump(mq, f)
+
         if sele == "st":
             print("Time setting >")
             rtc = machine.RTC()
@@ -154,13 +202,17 @@ def setup():
             rtc.init(dt_int)
             print(str(rtc.datetime()))
 
-        if sele == "sd":
-            print("System download > (initial octopus modules)")
-            import upip
-            print("Installing shutil")
-            upip.install("micropython-shutil")
-            print("Running deploy")
-            #deplUrl = "http://iot.petrkr.net/olab/latest.tar"
+        if sele == "sdp":
+            shutil()
+            deplUrl = "http://iot.petrkr.net/olab/latest.tar"
+            deploy(deplUrl)
+
+        if sele == "sdo":
+            shutil()
             #deplUrl = "http://octopuslab.cz/download/latest.tar"
             deplUrl = "http://octopusengine.org/download/latest.tar"
             deploy(deplUrl)
+
+        if sele == "o":
+            from util.octopus import octopus
+            octopus()    
