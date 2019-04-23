@@ -34,6 +34,9 @@ ampy put ./util/setup.py util/setup.py
 echo "util/wifi_connect"
 ampy put ./util/wifi_connect.py util/wifi_connect.py
 
+echo "util/sys_info"
+ampy put ./util/sys_info.py util/sys_info.py
+
 # if local file with wifi setting exists, push it
 if [ -f 'config/wifi.json' ]; then
     echo "Deploying local config/wifi.json"
