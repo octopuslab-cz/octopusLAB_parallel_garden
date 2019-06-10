@@ -45,6 +45,9 @@ minute = 10         # 1/10 for data send
 last8dID = True     # for db only 8 bytes device ID
 wifi_retries = 100  # for wifi connecting
 
+# Influx db
+influxWriteURL = ""
+
 # hard-code config / daefault
 timeInterval = 10
 tempoffset = 0      # hard correction of err/wrong dallas
@@ -86,7 +89,7 @@ dspin = machine.Pin(pinout.ONE_WIRE_PIN)  # Dallas temperature
 button3 = machine.Pin(pinout.BUTT3_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
 rtc = machine.RTC() # real time
 tim1 = Timer(0)     # for main 10 sec timer
-uart1 = UART(1, 9600)
+#uart1 = UART(1, 9600)
 
 iot_config = {}  # main system config - default/flash-json/web-cloud
 url_config = {}
@@ -94,7 +97,7 @@ pumpNodes = {}
 
 def loadConfig():
     global confVer, place, timeInterval, runDemo, startLight, stopLight, lightIntensity, pumpDurat, pumpNodes
-    global confUID, Debug, last8dID, isTemp, isLight, isMois, isAD, isADL, isADT, cloudConfig, cloudUpdate
+    global confUID, Debug, last8dID, isTemp, isLight, isMois, isAD, isADL, isADT, cloudConfig, cloudUpdate, influxWriteURL
     
     configFile = 'config/garden.json'
     if Debug: print("load "+configFile+" >")
@@ -116,6 +119,8 @@ def loadConfig():
         pumpNodes = iot_config.get('pumpnodes')
         Debug = iot_config.get('debug')
         last8dID = iot_config.get('uid8')
+
+        influxWriteURL = iot_config.get('influxWriteURL')
 
         isTemp = iot_config.get('mtemp') # m=measure temperature
         isLight = iot_config.get('mlight')
@@ -284,6 +289,12 @@ def sendData():
         print("Err.cloudConfigDynamic")       
 
     try:
+        influx_tags   = dict()
+        influx_fields = dict()
+
+        influx_tags["device"] = deviceID
+        influx_tags["place"]  = place
+
         # GET >
         #urlGET = urlGet + "?device=" + deviceID + "&type=temp1&value=" + str(tw)
         #req = urequests.post(url)
@@ -292,6 +303,7 @@ def sendData():
             time.sleep_ms(750)
             for t in ts:
                 temp = ds.read_temp(t)
+                influx_fields["temp"] = temp
                 tw = int(temp*10)
                 postdata_t = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(tw),"t{0}".format(bytearrayToHexString(t)[-6:]))
                 res = urequests.post(urlPOST, data=postdata_t, headers=header)
@@ -300,18 +312,21 @@ def sendData():
         if isLight:
             if bhLight:
                 numlux = sbh.luminance(BH1750.ONCE_HIRES_1)
+                influx_fields["light1"] = numlux
                 postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(numlux)),"ligh1")
                 res = urequests.post(urlPOST, data=postdata_l, headers=header)
                 time.sleep_ms(1000)
 
             if bh2Light:
                 numlux = sbh2.luminance(BH1750.ONCE_HIRES_1)
+                influx_fields["light2"] = numlux
                 postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(numlux)),"ligh2")
                 res = urequests.post(urlPOST, data=postdata_l, headers=header)
                 time.sleep_ms(1000)
 
             if tslLight:
                 numlux = tsl.read()
+                influx_fields["light3"] = numlux
                 postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(numlux)),"ligh3")
                 res = urequests.post(urlPOST, data=postdata_l, headers=header)
                 time.sleep_ms(1000)
@@ -321,14 +336,22 @@ def sendData():
             if   isOLED:
                 valmap = map(sM, 0, 4050, 0, 126)
                 displBarSlimH(oled, valmap, 11)
+            influx_fields["mois1"] = sM
             postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(sM)),"mois1")
             res = urequests.post(urlPOST, data=postdata_l, headers=header)
 
         if isAD:
            adV = getADvolt(Debug)
            displMessage("AD:"+str(adV),2) #only test
+           influx_fields["adraw"] = adV
            postdata_l = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, str(int(adV)),"adraw")
            res = urequests.post(urlPOST, data=postdata_l, headers=header)
+
+        postdata_tags   = ','.join(["%s=%s" % (k, v) for (k, v) in influx_tags.items()])
+        postdata_fields = ','.join(["%s=%s" % (k, v) for (k, v) in influx_fields.items()])
+
+        postdata_influx = "hydrobox,{0} {1}".format(postdata_tags, postdata_fields)
+        res = urequests.post(influxWriteURL, data=postdata_influx)
 
     except:
         displMessage("Err: send data",3)
@@ -439,7 +462,7 @@ def runAction():
             relay(0)
             pumpStat = 0
     #except:
-    #    print("runAction() > ERR.pump")              
+    #    print("runAction() > ERR.pump")
 
 def buttonCheck():
     first3 = button3.value()    
