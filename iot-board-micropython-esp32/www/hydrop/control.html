@@ -73,6 +73,30 @@
         xhr.send(value);
     }
 
+    function relayValue(value) {
+        var infoLed = document.getElementById("relay");
+        var xhr = new XMLHttpRequest();
+        infoLed.innerText = value;
+        xhr.timeout = 10000;
+
+        xhr.onerror = function () {
+            console.log("Error");
+        }
+
+        xhr.ontimeout = function () {
+            console.log("Request timeout");
+        }
+
+        xhr.onload = function () {
+            console.log(xhr.responseText);
+            console.log(xhr.status);
+            boardInfo();
+        }
+
+        xhr.open('POST', '/relay');
+        xhr.send(value);
+    }
+
 </script>
 
 <body>
@@ -104,7 +128,7 @@
     <br />
 
     <div class="radius">
-        <h3>Esp32 simple control</h3>
+        <h3>LED control</h3>
         LED control: <span id="led"></span><br />
         <form>
             <input class="button_big back_gre" type="button" onClick="ledPwmValue(4095)" value="On" /></input>
@@ -112,24 +136,26 @@
 
         </form>
         <hr />
+
+        <h3>LED light intensity</h3>
+        <input class="slider" id="pwm_duty" type="range" min=0 max=4096 onchange="ledPwmValue(this.value);" />
+    </div>
+    <br />
+
+    <div class="radius">
+        <h3>Relay control</h3>
+        Relay control: <span id="relay"></span><br />
+        <form>
+            <input class="button_big back_gre" type="button" onClick="relayValue(1)" value="On" /></input>
+            <input class="button_big back_red" type="button" onClick="relayValue(0)" value="Off" /></input>
+        </form>
+    </div>
+    <br />
+
+    <div class="radius">
         <br />
-
-        <div class="radius">
-            <h3>Esp32 testing and prepare</h3>
-            PWM test: <span id="pwm"></span><br />
-            PORT: <input class="inp_txt" id="pwm_port" type="text" name="pwm_port" size="5" /> |
-            DUTY: <input class="inp_txt" id="pwm_duty" type="text" name="pwm_duty" size="5" /> |
-            FREQ: <input class="inp_txt" id="pwm_freq" type="text" name="pwm_freq" size="5" />
-
-            <hr />
-            <br />
-        </div>
-
-        <br />
-        <div class="radius">
-            <br />
-            ◄ Back to main <a href="../index.html">MENU</a>
-        </div>
+        ◄ Back to main <a href="../index.html">MENU</a>
+    </div>
 
 </body>
 
