@@ -14,8 +14,9 @@ if pinout.MFET_PIN is not None:
 
 RELAY = pinout.RELAY_PIN
 
+
 @MicroWebSrv.route('/led/pwm', "POST")
-def _httpTest123(httpClient, httpResponse):
+def _httpLedPwmSet(httpClient, httpResponse):
     print("LED PWM Call")
 
     data = httpClient.ReadRequestContent()
@@ -38,7 +39,7 @@ def _httpTest123(httpClient, httpResponse):
     httpResponse.WriteResponse(code=204, headers = None, contentType = "text/plain", contentCharset = "UTF-8", content = None)
 
 @MicroWebSrv.route('/relay', "POST")
-def _httpTest123(httpClient, httpResponse):
+def _httpRelaySet(httpClient, httpResponse):
     print("Relay Call")
 
     data = httpClient.ReadRequestContent()
@@ -62,3 +63,4 @@ def _httpTest123(httpClient, httpResponse):
 
 octopus.w_connect()
 octopus.web_server()
+
