@@ -1,0 +1,117 @@
+body {
+    background-color: #fff1d4;
+    color:#555;
+    font:14px/1.3 Arial,sans-serif;
+}
+
+.back_red { background-color: red; }
+.back_gre { background-color: green; }
+.back_blu { background-color: blue; }
+.back_ora { background-color: orange; }
+.back_vio { background-color: violet; }
+.back_whi { background-color: white; }
+.back_sil { background-color: dimgray; }
+
+.main {
+    margin:10;
+    padding:10;
+}
+
+h1 {
+  color: black;
+  height: 35px;
+}
+
+h1 img {
+    position: relative; top: 6px;
+}
+
+h2 {
+    color: maroon;
+}
+
+h3 {
+    color: darkorange;
+}
+
+.right_line {
+    border-right-style: 1px solid Silver;
+}
+
+.radius, .radius_100, .radiusgroup {
+    border-radius: 8px;
+    border: 1px solid Silver;
+    padding: 20px;
+}
+
+.radius {
+    padding-top: 0px;
+    width: 520px;
+}
+
+.radius_100 {
+    width: 399px;
+}
+
+.radiusgroup {
+    background-color: #fff8f2;
+    border: 1px solid dimgray;
+    padding-top: 0px;
+    width: 560px;
+}
+
+.button0 {
+    display: inline-block; border: none; width: 85px;
+    border-radius: 5px; padding: 8px; text-decoration: none; 
+    font-size: 16px; margin: 2px; cursor: pointer;
+}
+
+.button, .button1, .button2, .button_green {
+    display: inline-block; background-color: darkorange; border: none; 
+    border-radius: 5px; color: white; padding: 8px 32px; text-decoration: none; 
+    font-size: 20px; margin: 2px; cursor: pointer;
+}
+
+.button:hover {
+    color: maroon;
+    background-color: orange;
+    border-color: black;
+    transition: 0.35s;
+}
+
+.button1 {
+    background-color: darkorange; width: 339px;
+}
+
+.button1 a:hover {
+    text-decoration: none;
+    color: maroon;
+}
+
+.button1:hover {
+    color: maroon;
+    background-color: orange;
+    border-color: black;
+    transition: 0.35s;
+}
+
+.button2 {
+    background-color: silver; color: black; width: 339px;
+}
+
+.button_green {
+    background-color: darkgreen; width: 339px;
+}
+
+.button_green:hover {
+    color: maroon;
+    background-color: lightgreen;
+    border-color: black;
+    transition: 0.35s;
+}
+
+.button_big {
+    padding: 8px 32px; text-decoration: none; border-radius: 5px;
+    font-size: 20px; margin: 2px; cursor: pointer;
+    color: black; width: 230px; height: 100px;
+}

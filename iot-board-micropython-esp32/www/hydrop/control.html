@@ -1,0 +1,136 @@
+<html>
+
+<head>
+    <title>octopusLAB-ESP32-Hydroponics Control</title>
+    <meta charset="utf-8" />
+    <link href="../main.css" rel="stylesheet" type="text/css" />
+</head>
+<script>
+    function loadInfo() {
+        var button = document.getElementById("buttonInfo");
+        var table = document.getElementById("tableInfo");
+        //var infoTest = document.getElementById("testInfo");
+        var infoUID = document.getElementById("infoUID");
+        var infoMAC = document.getElementById("infoMAC");
+        var infoRAM = document.getElementById("infoRAM");
+        var infoFLASH = document.getElementById("infoFLASH");
+        button.value = "Loading...";
+        button.disabled = true;
+
+        var xhr = new XMLHttpRequest();
+        xhr.timeout = 10000;
+
+        xhr.onerror = function () {
+            console.log("Error");
+            button.value = "Load";
+            button.disabled = false;
+        }
+
+        xhr.ontimeout = function () {
+            console.log("Request timeout");
+            button.value = "Load";
+            button.disabled = false;
+        }
+
+        xhr.onload = function () {
+            button.value = "Load";
+            button.disabled = false;
+
+            var json = JSON.parse(xhr.responseText);
+            console.log(json);
+            console.log(xhr.responseText);
+            infoMAC.innerText = json['deviceMAC'];
+            infoUID.innerText = json['deviceUID'];
+            infoRAM.innerText = json['freeRAM'];
+            infoFLASH.innerText = json['freeFLASH'];
+        }
+
+        xhr.open('GET', '/esp/control_info.json');
+        xhr.send();
+    }
+
+    function ledPwmValue(value) {
+        var infoLed = document.getElementById("led");
+        var xhr = new XMLHttpRequest();
+        infoLed.innerText = value;
+        xhr.timeout = 10000;
+
+        xhr.onerror = function () {
+            console.log("Error");
+        }
+
+        xhr.ontimeout = function () {
+            console.log("Request timeout");
+        }
+
+        xhr.onload = function () {
+            console.log(xhr.responseText);
+            console.log(xhr.status);
+            boardInfo();
+        }
+
+        xhr.open('POST', '/led/pwm');
+        xhr.send(value);
+    }
+
+</script>
+
+<body>
+    <h1><img src="../octopus-72.png" ALIGN="BOTTOM"> octopusLAB - ESP32 control</h1>
+
+    <br />
+    <div class="radius">
+        <h3>Esp32 system info</h3>
+        <b>UID: </b><span id="infoUID">...</span><br />
+        <b>MAC: </b><span id="infoMAC">...</span> (AP/WiFi/LAN) <br />
+        <b>Machine FREQ: </b><br />
+        <b>free RAM: </b><span id="infoRAM">...</span><br />
+        <b>Flash: </b><span id="infoFLASH">...</span><br /><br />
+        ... <span id="testInfo"></span><br />
+        <br />
+        <input class="button" type="button" onClick="loadInfo()" id="buttonInfo" value="Load" />
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Test</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody id="tableInfo"></tbody>
+        </table>
+
+    </div>
+    <br />
+
+    <div class="radius">
+        <h3>Esp32 simple control</h3>
+        LED control: <span id="led"></span><br />
+        <form>
+            <input class="button_big back_gre" type="button" onClick="ledPwmValue(4095)" value="On" /></input>
+            <input class="button_big back_red" type="button" onClick="ledPwmValue(0)" value="Off" /></input>
+
+        </form>
+        <hr />
+        <br />
+
+        <div class="radius">
+            <h3>Esp32 testing and prepare</h3>
+            PWM test: <span id="pwm"></span><br />
+            PORT: <input class="inp_txt" id="pwm_port" type="text" name="pwm_port" size="5" /> |
+            DUTY: <input class="inp_txt" id="pwm_duty" type="text" name="pwm_duty" size="5" /> |
+            FREQ: <input class="inp_txt" id="pwm_freq" type="text" name="pwm_freq" size="5" />
+
+            <hr />
+            <br />
+        </div>
+
+        <br />
+        <div class="radius">
+            <br />
+            ◄ Back to main <a href="../index.html">MENU</a>
+        </div>
+
+</body>
+
+</html>

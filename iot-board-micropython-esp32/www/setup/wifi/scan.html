@@ -1,0 +1,72 @@
+<html>
+<head>
+<title>Sample WiFi SCAN result</title>
+</head>
+
+<script>
+   function networkEnc(type) {
+       switch (type) {
+            case 0:
+                return "Open"
+            case 1:
+                return "WEP"
+            case 2:
+                return "WPA-PSK"
+            case 3:
+                return "WPA2-PSK"
+            case 4:
+                return "WPA/WPA2-PSK"
+            default:
+                return "Unknown type " + type
+       }
+   }
+
+    function loadNetworks()
+    {
+        var nets = document.getElementById("nets");
+        var netstable = document.getElementById("netstable");
+        nets.innerHTML = "Scanning...";
+        netstable.innerHTML = "";
+
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4){
+                var json = JSON.parse(xhr.responseText);
+                console.log(json);
+                console.log(xhr.responseText);
+                nets.innerHTML = "";
+                json.forEach(function(item) {
+                    console.log(item);
+
+                    // opt = document.createElement("div");
+                    // opt.innerHTML = item[0] + "("+ item[3] +")";
+                    // nets.appendChild(opt);
+
+                    row = document.createElement("tr");
+                    row.innerHTML = "<td>" + item[0] + "</td><td>" + item[1].replace(/..\B/g, '$&:') + "</td><td>" + item[2] + "</td><td>"+ item[3] +"</td><td>" + networkEnc(item[4]) + "</td>";
+                    netstable.appendChild(row);
+                });
+            }
+        };
+
+        xhr.open('GET', '/setup/wifi/networks.json');
+        xhr.send();
+    }
+
+</script>
+
+<body>
+  <h1>WiFi network scanner</h1>
+  <input type="button" onClick="loadNetworks()" value="Scan" />
+
+  <h2>Networks</h2>
+  <div id="nets"></div>
+  <table>
+  <thead>
+  <tr><th>SSID</th><th>BSSID</th><th>Channel</th><th>RSSI</th><th>Encryption</th></tr>
+  </thead>
+  <tbody id="netstable"></tbody>
+  </table>
+
+</body>
+</html>
