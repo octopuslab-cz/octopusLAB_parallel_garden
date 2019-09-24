@@ -68,7 +68,7 @@ def _httpLedPwmSet(httpClient, httpResponse):
     
     try:
         value = int(data)
-        MFET.value(value)
+        FET.duty(value)
     except Exception as e:
         print("Exception: {0}".format(e))
         raise
