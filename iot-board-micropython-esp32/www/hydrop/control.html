@@ -8,13 +8,11 @@
 <script>
     function loadInfo() {
         var button = document.getElementById("buttonInfo");
-        var table = document.getElementById("tableInfo");
-        //var infoTest = document.getElementById("testInfo");
         var infoUID = document.getElementById("infoUID");
         var infoMAC = document.getElementById("infoMAC");
         var infoRAM = document.getElementById("infoRAM");
         var infoFLASH = document.getElementById("infoFLASH");
-        button.value = "Loading...";
+        button.value = "Refreshing...";
         button.disabled = true;
 
         var xhr = new XMLHttpRequest();
@@ -22,18 +20,18 @@
 
         xhr.onerror = function () {
             console.log("Error");
-            button.value = "Load";
+            button.value = "Refresh";
             button.disabled = false;
         }
 
         xhr.ontimeout = function () {
             console.log("Request timeout");
-            button.value = "Load";
+            button.value = "Refresh";
             button.disabled = false;
         }
 
         xhr.onload = function () {
-            button.value = "Load";
+            button.value = "Refresh";
             button.disabled = false;
 
             var json = JSON.parse(xhr.responseText);
@@ -103,30 +101,19 @@
 
 </script>
 
-<body>
+<body onload="loadInfo()">
     <h1><img src="../octopus-72.png" ALIGN="BOTTOM"> octopusLAB - ESP32 control</h1>
 
     <br />
     <div class="radius">
         <h3>Esp32 system info</h3>
         <b>UID: </b><span id="infoUID">...</span><br />
-        <b>MAC: </b><span id="infoMAC">...</span> (AP/WiFi/LAN) <br />
+        <b>MAC: </b><span id="infoMAC">...</span><br />
         <b>Machine FREQ: </b><br />
         <b>free RAM: </b><span id="infoRAM">...</span><br />
         <b>Flash: </b><span id="infoFLASH">...</span><br /><br />
-        ... <span id="testInfo"></span><br />
         <br />
-        <input class="button" type="button" onClick="loadInfo()" id="buttonInfo" value="Load" />
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Test</th>
-                    <th>Data</th>
-                </tr>
-            </thead>
-            <tbody id="tableInfo"></tbody>
-        </table>
+        <input class="button" type="button" onClick="loadInfo()" id="buttonInfo" value="Refresh" />
 
     </div>
     <br />
