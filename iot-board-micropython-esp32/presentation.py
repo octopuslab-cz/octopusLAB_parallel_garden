@@ -39,11 +39,15 @@ def _httpTest123(httpClient, httpResponse):
 
 @MicroWebSrv.route('/relay', "POST")
 def _httpTest123(httpClient, httpResponse):
+    print("Relay Call")
+
+    data = httpClient.ReadRequestContent()
+    print(data)
+
     if RELAY is None:
         httpResponse.WriteResponse(code=500, headers = None, contentType = "text/plain", contentCharset = "UTF-8", content = "RELAY is not defined, check setup()")
         return
     
-    data = httpClient.ReadRequestContent()
     try:
         value = int(data)
         RELAY.value(value)
