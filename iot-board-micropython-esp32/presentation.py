@@ -8,7 +8,7 @@ from util.display_segment import threeDigits
 from util.iot_garden import fade_in, demo_relay, led_fet
 from util.pinout import set_pinout
 from lib.microWebSrv import MicroWebSrv
-# from machine import PWM
+from machine import PWM, Pin
 
 OLEDX = 128
 OLEDY = 64
@@ -65,7 +65,6 @@ def _httpLedPwmSet(httpClient, httpResponse):
     if FET is None:
         httpResponse.WriteResponse(code=500, headers = None, contentType = "text/plain", contentCharset = "UTF-8", content = "MFET is not defined, check setup()")
         return
-
     
     try:
         value = int(data)
@@ -107,10 +106,12 @@ pinout = set_pinout()
 
 FET = None
 if pinout.MFET_PIN is not None:
-    FET = PWM(MFET_PIN, freq=2000)
+    FET = PWM(Pin(pinout.MFET_PIN), freq=2000)
     FET.duty(0)
 
-RELAY = pinout.RELAY_PIN
+RELAY = None
+if pinout.RELAY_PIN is not None:
+    RELAY = Pin(pinout.RELAY_PIN)
 
 print("init > ")
 t = temp_init()
