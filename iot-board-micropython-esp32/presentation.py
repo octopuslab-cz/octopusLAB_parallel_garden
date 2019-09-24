@@ -119,8 +119,12 @@ oled = oled_init()
 sleep(1)
 oled.clear()
 
-w_connect()
+wlan = w_connect()
 web_server()
+
+displMessage(wlan.sta_if.ifconfig()[0], 5)
+
+oled.clear()
 
 print("test")
 """
