@@ -51,6 +51,10 @@
 
     function ledPwmValue(value) {
         var infoLed = document.getElementById("led");
+        var slider_led = document.getElementById("pwm_duty");
+
+        slider_led.value = value
+
         var xhr = new XMLHttpRequest();
         infoLed.innerText = value;
         xhr.timeout = 10000;
