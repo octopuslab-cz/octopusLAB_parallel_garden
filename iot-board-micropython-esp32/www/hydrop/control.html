@@ -122,14 +122,14 @@
         <h3>LED control</h3>
         LED control: <span id="led"></span><br />
         <form>
-            <input class="button_big back_gre" type="button" onClick="ledPwmValue(4095)" value="On" /></input>
+            <input class="button_big back_gre" type="button" onClick="ledPwmValue(1023)" value="On" /></input>
             <input class="button_big back_red" type="button" onClick="ledPwmValue(0)" value="Off" /></input>
 
         </form>
         <hr />
 
         <h3>LED light intensity</h3>
-        <input class="slider" id="pwm_duty" type="range" min=0 max=4096 value=0 onchange="ledPwmValue(this.value);" />
+        <input class="slider" id="pwm_duty" type="range" min=0 max=1023 value=0 onchange="ledPwmValue(this.value);" />
     </div>
     <br />
 
