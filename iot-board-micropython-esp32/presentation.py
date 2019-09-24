@@ -106,7 +106,7 @@ pinout = set_pinout()
 
 FET = None
 if pinout.MFET_PIN is not None:
-    FET = PWM(Pin(pinout.MFET_PIN), freq=2000)
+    FET = PWM(Pin(pinout.MFET_PIN), freq=500)
     FET.duty(0)
 
 RELAY = None
