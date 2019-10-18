@@ -2,32 +2,23 @@
 from hydroponics.config import load_config, load_url_config, print_config
 cf = load_config()
 cw = load_url_config()
-print(cw["version"])
+print(cw["version"]) # print(cw["pumpnodes"][1])
 """
-import time, os, ubinascii
 import urequests, json
-from util.led import blink
-from util.wifi_connect import read_wifi_config, WiFiConnect
-
 from util.octopus import get_eui, w
-
 deviceID = str(get_eui())
+
+# ------------------------------
 
 place = "none"      # group of IoT > load from config/garden.json
 minute = 10         # 1/10 for data send
-last8dID = True     # for db only 8 bytes device ID
-wifi_retries = 100  # for wifi connecting
 
 # hard-code config / daefault
 timeInterval = 10
 tempoffset = 0      # hard correction of err/wrong dallas
 startLight = 12
 stopLight = 12
-cloudConfig = False
-cloudUpdate = False
-cloudConfigDynamic = True
 lightIntensity = 1023
-
 oldLightIntensity = 1023
 
 # Defaults - sensors
@@ -46,18 +37,21 @@ confVer = 0         # config version 0.3>1
 
 runDemo = False
 pumpDurat = 0
-confUID = 0
 
-# config data structure
-conf_data={
-"config version": "version",
-"place": "place",
-"timeInterval minutes: ": "timeinterval",
-"start light": "startlight",
-"stop light": "stoplight",
-"pump time nodes": "pumpnodes",
-"pump duration": "pumpduration"
-}
+# config data structure - is not dict, because bad sort
+conf_data=[
+["config version", "version"],
+["place (name)", "place"],
+["start light [hour]", "startlight"],
+["stop light [hour]", "stoplight"],
+["light intensity (0-1023)", "lightintensity"],
+["pump time nodes", "pumpnodes"],
+["pump duration", "pumpduration"],
+["time interval [minutes]", "timeinterval"],
+["start: run demo", "rundemo"],
+["cloud config", "cloudconfig"],
+["cloud update", "cloudupdate"]
+]
 
 config = {}
 
@@ -106,14 +100,14 @@ def change_config(): # once / no save
 
 def print_config(cc):
     print()
-    print('=' * 33)
-    for ix in conf_data.values():
+    print('=' * 39)
+    for ix in conf_data:
         try:
-            # print(ix, cc[ix])
-            print(" %15s - %s " % (ix, cc[ix] ))
+            # print(ix, cc[ix]) # dict{}
+            print(" %25s - %s " % (ix[0], cc[ix[1]] ))
         except:
             Err_print_config = True
-    print('=' * 33)
+    print('=' * 39)
 
 """
 def print_config-old():
