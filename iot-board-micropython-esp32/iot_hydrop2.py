@@ -9,10 +9,11 @@ control:
 PWM LED and relay for water pump
 """
 
-from time import sleep
+from time import sleep, sleep_ms
+from urandom import randint
 from machine import Pin, PWM, ADC, UART, RTC, Timer
 from util.pinout import set_pinout 
-from util.octopus import getFree, printLog, printTitle, oled_init, time_init, getVer, get_hhmm, w
+from util.octopus import getFree, map, printLog, printTitle, oled_init, time_init, getVer, get_hhmm, w
 
 ver = "0.51" # int(*100) > db
 # last update 20.10.2019 
@@ -32,6 +33,13 @@ def timeDisplay():
        print("timeDisplay() Exception: {0}".format(e))
 
 
+def tempDisplay(temp):
+    tw = int(temp*10)
+    # print("T({0}): {1}".format(bytearrayToHexString(t), str(tw/10)))
+    if isOLED:
+        threeDigits(oled,tw,True,True)
+
+
 def displMessage(mess,timm=0.1):
     ydown = 57
     x0 = 5
@@ -44,6 +52,33 @@ def displMessage(mess,timm=0.1):
         sleep(timm)
     except Exception as e:
        print("displMessage() Exception: {0}".format(e)) 
+
+
+def displBarSlimH(val,ybh = 11): # horizontal
+    xbh = 2
+    maxbv = 126
+    oled.hline(xbh,ybh,maxbv,0)
+    for ix in range(42):
+        oled.fill_rect(xbh+ix*3,ybh,1,1,1)
+    oled.hline(xbh,ybh,val,1) 
+    oled.show()
+
+
+def displBar(num, timb = 10, anim = False, by = 58):
+    xb0 = 0 # display bar possition
+   
+    if num>10: num = 10
+    oled.fill_rect(xb0,by-1,128,5+2,0) # clear
+    for i in range(10):               # 0
+        oled.hline(xb0+i*13,by+2,9,1)
+    if num > 0:
+      for i in range(num):               # 1
+        oled.fill_rect(xb0+i*13,by,10,5,1)
+        if anim:
+           oled.show()
+           time.sleep_ms(30) # animation
+    oled.show()
+    sleep_ms(timb)
 
 
 def check_point(num, mess):
@@ -67,6 +102,15 @@ def timerSend():
 def timer_init():
     printTitle("timer init > stop: tim1.deinit()")
     tim1.init(period=10000, mode=Timer.PERIODIC, callback=lambda t:timerSend())
+
+
+def sensorsDisplay():
+    if es["temp"]:
+        temp = get_temp(*ts)
+        tempDisplay(temp)
+
+        light = randint(1, 10) # test
+        displBar(light)
 
 
 # --------------------------------
@@ -103,14 +147,29 @@ if es["led"]:
 isOLED = False
 if es["oled"]:
     from assets.icons9x9 import ICON_clr, ICON_wifi
+    from util.display_segment import threeDigits
     isOLED = True
     try:
         oled = oled_init()
         sleep(1)
         oled.clear()
-        displMessage("version: "+ver,2)
+        displMessage("version: "+ver,1)
+        for _ in range(5):
+            randval = randint(1, 4000)
+            valmap = map(randval, 0, 4000, 0, 125)
+            displBarSlimH(valmap, 11) # 0-120 / y
+            sleep(0.2)
+
+        displBarSlimH(0, 11)
     except:
+        print("Err.oled")
         isOLED = False
+
+if es["temp"]:
+    from util.octopus import temp_init, get_temp
+    ts = temp_init() # ts temp sensor
+    temp = get_temp(*ts)
+    tempDisplay(temp)
 
 # --------------------------------
 check_point(3,"device config")
@@ -141,14 +200,15 @@ printLog(6,"start main loop >")
 displMessage("")
 timer_init()
 getFree(True)
+
 # ============================= main loop ==========================
 while True:
 
     #wifi.handle_wifi()
     timeDisplay()
     #runAction()
-    sleep(0.2)
-    #sensorsDisplay()    
+    sleep(0.3)
+    sensorsDisplay()
 
     if not button3.value():
         print("1 > butt3")
