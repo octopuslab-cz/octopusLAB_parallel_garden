@@ -1,47 +1,64 @@
 """
-from hydroponics.config import load_config, load_url_config, print_config
-cf = load_config()
-cw = load_url_config()
+from hydroponics.config import load_config, load_url_config, print_config, load_env_setup, print_env_setup
+es = load_env_setup()
+print_env_setup(es)
+print(es["relay"])
+
+cf = load_config() # from file
+cw = load_url_config() # from "web"
 print(cw["version"]) # print(cw["pumpnodes"][1])
 """
+
 import urequests, json
-from util.octopus import get_eui, w
+from util.octopus import get_eui
 deviceID = str(get_eui())
 
+
 # ------------------------------
+# setup peripherials / sensors - data structure
+conf_setup=[
+["built_in_led","led"],
+["WS rgb led","ws"],
+["i2c light sensor","light"],
+["temperature (dall.)","temp"],
+["A/D moisture","mois"],
+["A/D capacit moist.","cmois"],
+["A/D inp.voltage","ad0"],
+["A/D photoresist.","ad1"],
+["A/D thermistor","ad2"],
+["mosFet pwm led","fet"],
+["relay","relay"]
+]
 
-place = "none"      # group of IoT > load from config/garden.json
-minute = 10         # 1/10 for data send
 
-# hard-code config / daefault
-timeInterval = 10
-tempoffset = 0      # hard correction of err/wrong dallas
-startLight = 12
-stopLight = 12
-lightIntensity = 1023
-oldLightIntensity = 1023
+def get_conf_setup():
+    return conf_setup
 
-# Defaults - sensors
-isTemp = 0          # temperature
-isLight = 0         # light (lux)
-isMois = 0          # moisture
-isAD = 0            # AD input voltage
-isADL = 0           # AD photoresistor
-isADT = 0           # AD thermistor   
-isPH = 0            # TODO  
-isPressure = 0      # 
-prewLight = False
-prewRelay = False
-pumpStat = 0
-confVer = 0         # config version 0.3>1
 
-runDemo = False
-pumpDurat = 0
+def load_env_setup():
+    from util.io_config import get_from_file as get_io_config_from_file
+    # read current settings from json to config object
+    io_conf = get_io_config_from_file()
+    return io_conf
+
+
+def print_env_setup(io_conf):
+    print()
+    print('=' * 39)
+    for ix in conf_setup:
+        try:
+            # print(ix, cc[ix]) # dict{}
+            print(" %25s - %s " % (ix[0], io_conf[ix[1]] ))
+        except:
+            Err_print_config = True
+    print('=' * 39)
+
 
 # config data structure - is not dict, because bad sort
 conf_data=[
 ["config version", "version"],
 ["place (name)", "place"],
+["temperature offset", "tempoffset"],
 ["start light [hour]", "startlight"],
 ["stop light [hour]", "stoplight"],
 ["light intensity (0-1023)", "lightintensity"],
@@ -53,7 +70,10 @@ conf_data=[
 ["cloud update", "cloudupdate"]
 ]
 
-config = {}
+
+def get_conf_data():
+    return conf_data
+
 
 def load_config(configFile = 'config/garden.json'):
     print("load "+configFile+" >")
@@ -68,9 +88,8 @@ def load_config(configFile = 'config/garden.json'):
     return iot_config
 
 
-def load_url_config():
+def load_url_config(urlApi ="http://www.octopusengine.org/api/hydrop/"):
     url_config = {}
-    urlApi ="http://www.octopusengine.org/api/hydrop/"
     urlConf = urlApi + "/config/" + deviceID + ".json"
     print("--- load URL Config >")
     try:
@@ -175,7 +194,6 @@ def loadConfig-old():
         print("Err. or 'config/garden.json' does not exist")
 
 """
-
 # ----------------------- init > config ----------------------
 
 #loadConfig()
@@ -185,4 +203,3 @@ def loadConfig-old():
 
 # timeSetup()
 # logDevice()
-
