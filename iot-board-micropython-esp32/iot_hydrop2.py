@@ -7,6 +7,8 @@ for #hydroponics IoT monitoring and control system
 - moisture sensor and next A/D (light/temp)
 control: 
 PWM LED and relay for water pump
+
+ampy -p /COM6 put ./hydroponics/iot_hydrop2.py main.py
 """
 
 from time import sleep, sleep_ms
@@ -14,11 +16,30 @@ from urandom import randint
 from machine import Pin, PWM, ADC, UART, RTC, Timer
 from util.pinout import set_pinout 
 from util.octopus import getFree, map, printLog, printTitle, oled_init, time_init, getVer, get_hhmm, w
+from hydroponics.iot_garden import led_fet, relay
 
 ver = "0.51" # int(*100) > db
 # last update 20.10.2019 
 getFree(True)
 
+# --------------------------------
+printLog(1,"boot device >")
+pinout = set_pinout()
+led_numpin = pinout.BUILT_IN_LED # BUILT_IN_LED
+dspin = Pin(pinout.ONE_WIRE_PIN)  # Dallas temperature
+#button3 = Pin(pinout.BUTT3_PIN, Pin.IN, Pin.PULL_UP)
+button3 = Pin(0, Pin.IN, Pin.PULL_UP) # test - boot pin
+rtc = RTC() # real time
+tim1 = Timer(0)     # for main 10 sec timer 
+Debug = True
+
+print("sensor_log2 - version: " + ver)
+print(getVer())
+#print(getGardenLibVer())
+#deviceID = str(get_eui())
+
+startLight = 0
+stopLight = 1
 
 def timeDisplay():
     xt = 88 # display time possition
@@ -113,20 +134,60 @@ def sensorsDisplay():
         displBar(light)
 
 
-# --------------------------------
-printLog(1,"boot device >")
-pinout = set_pinout()
-led_numpin = pinout.BUILT_IN_LED # BUILT_IN_LED
-dspin = Pin(pinout.ONE_WIRE_PIN)  # Dallas temperature
-#button3 = Pin(pinout.BUTT3_PIN, Pin.IN, Pin.PULL_UP)
-button3 = Pin(0, Pin.IN, Pin.PULL_UP) # test - boot pin
-rtc = RTC() # real time
-tim1 = Timer(0)     # for main 10 sec timer 
+def runAction(): # todo: fix
+    # --- light
+    global prewLight, pumpStat, oldLightIntensity
 
-print("sensor_log2 - version: " + ver)
-print(getVer())
-#print(getGardenLibVer())
-#deviceID = str(get_eui())
+    hh=int(rtc.datetime()[4])
+    mm=int(rtc.datetime()[5])
+
+    print(">=startL: "+ str(startLight) + " :: <stopL: " + str(stopLight) + " --- now:"+ str(hh))
+    
+    if ((hh >= startLight) and (hh < stopLight)):
+        if prewLight:
+            print("> light on")
+            # displMessage("light ON",1)
+            if (oldLightIntensity != lightIntensity):
+                led_fet(lightIntensity, 2000)
+                displMessage("light:" + str(lightIntensity),1)                
+                oldLightIntensity = lightIntensity
+                print("change intensity: "+ str(lightIntensity))
+
+        else:    
+            print("> light on START")
+            displMessage("light ON START",2) 
+            # led_fet(lightIntensity, 2000) # 1023 # max 255=1/4 512=1/2 ...
+            fade_in(lightIntensity)
+            prewLight = True 
+            oldLightIntensity = lightIntensity
+            
+    else: 
+        print("> light off") 
+        # displMessage("light OFF",1)
+        led_fet(0, 2000) 
+        prewLight = False 
+    
+    # --- pump
+    dayM = hh*60 + mm
+    #try 
+    for nodeM in pumpNodes:
+        nodeMin = int(nodeM)*60
+        if Debug: print("dayMinutes: "+ str(dayM) + " :?: " + str(nodeMin) + " relay/pump Status: " + str(pumpStat))
+        # print(str(nodeMin))
+        if (dayM == nodeMin) and (pumpStat == 0):
+            print("relay ON")
+            displMessage("relay ON",1)
+            relay(1)
+            pumpStat = 1
+
+        if (dayM == nodeMin + pumpDurat) and (pumpStat == 1):
+            print("relay OFF")
+            displMessage("relay OFF",1) 
+            relay(0)
+            pumpStat = 0
+    #except:
+    #    print("runAction() > ERR.pump") 
+    
 
 sleep(1)
 # --------------------------------
@@ -176,6 +237,14 @@ check_point(3,"device config")
 cf = load_config() # from file
 print_config(cf)
 minute = cf["timeinterval"]
+startLight = cf["startlight"]
+stopLight = cf["stoplight"]
+prewLight = False
+oldLightIntensity = 0
+lightIntensity = cf["lightintensity"]
+pumpNodes = cf["pumpnodes"]
+pumpDurat = cf["pumpduration"]
+pumpStat = 0
 sleep(1)
 
 # --------------------------------
@@ -206,7 +275,7 @@ while True:
 
     #wifi.handle_wifi()
     timeDisplay()
-    #runAction()
+    runAction()
     sleep(0.3)
     sensorsDisplay()
 
