@@ -9,12 +9,15 @@ from hydroponics.send_data import send_data_get, send_data_post
 """
 from time import sleep, sleep_ms
 import urequests
+from util.octopus import Env
+deviceID = Env.uID
 
 try:
     from hydroponics.config import load_config
     cf = load_config()
     urlPOST = cf["urlpost"] # "http://www.yourweb.org/iot18/add18.php"
     urlGET = urlPOST
+    place = cf["place"]
 except Exception as e:
     print("Exception: {0}".format(e))
     
@@ -22,7 +25,7 @@ header = {}
 header["Content-Type"] = "application/x-www-form-urlencoded"
 
 
-def send_data_get(deviceID, val_type="log_ver", val=0): # GET >
+def send_data_get(val_type="log_ver", val=0): # GET >
     try:
         url = urlGET + "?device=" + str(deviceID) + "&type=" + val_type + "&value=" + str(val)
         print(url)
@@ -38,19 +41,17 @@ def log_device(ver): # POST >
         logVer =  int(float(ver)*100)
         postdata_v = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, logVer,"log_ver")
         res = urequests.post(urlPOST, data=postdata_v, headers=header)
-        time.sleep_ms(300)
         return("log_device.OK")
     except Exception as e:
         print("Exception: {0}".format(e))
         return("Err.log_device")
 
 
-def send_data_post(val): # POST >
+def send_data_post(val_type, val): # POST >
     try:
-        logVer =  int(float(ver)*100)
-        postdata_v = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, logVer,"log_ver")
-        res = urequests.post(urlPOST, data=postdata_v, headers=header)
-        time.sleep_ms(300)
+        postdata = "device={0}&place={1}&value={2}&type={3}".format(deviceID, place, val, val_type)
+        print(postdata)
+        res = urequests.post(urlPOST, data=postdata, headers=header)
         return("send_data_post.OK")
     except Exception as e:
         print("Exception: {0}".format(e))
