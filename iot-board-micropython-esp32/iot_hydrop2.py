@@ -16,7 +16,7 @@ from urandom import randint
 from machine import Pin, UART, RTC, Timer
 from util.pinout import set_pinout 
 from util.octopus import getFree, map, printLog, printTitle, oled_init, time_init, getVer, get_hhmm, w
-# from hydroponics.iot_garden import pwm_fet, relay
+from hydroponics.send_data import send_data_post
 
 ver = "0.51" # int(*100) > db
 # last update 20.10.2019 
@@ -107,6 +107,15 @@ def check_point(num, mess):
     displMessage(mess)
     getFree(True)
 
+def send_data():
+    if ios["temp"]:
+        temp = int(get_temp(*ts)*10)
+        print(send_data_post("temp",temp), str(temp))
+        sleep(1)
+
+    if ios["light"]: # must exist: ios 0 or 1
+        light = 0 # todo
+        sleep(1)
 
 it = 0 # every 10 sec.
 def timerSend():
@@ -116,7 +125,7 @@ def timerSend():
 
     if (it == 6*minute): # 6 = 1min / 60 = 10min
         if Debug: print("10 min. > send data:")
-        #sendData() # read sensors and send data
+        sendData() # read sensors and send data
         it = 0 
 
 
@@ -126,7 +135,7 @@ def timer_init():
 
 
 def sensorsDisplay():
-    if es["temp"]:
+    if ios["temp"]:
         temp = get_temp(*ts)
         tempDisplay(temp)
 
@@ -196,18 +205,18 @@ printLog(2,"init/env.setup >")
 from hydroponics.config import load_config, load_url_config, print_config, load_env_setup, print_env_setup
 
 # test
-es = load_env_setup()
+ios = load_env_setup()
 printTitle("env.setup")
 print_env_setup(es)
 # print(es["relay"])
 
-if es["led"]:
+if ios["led"]:
     from util.led import Led
     led = Led(led_numpin)
     led.blink()
 
 isOLED = False
-if es["oled"]:
+if ios["oled"]:
     print(">>> oled_init")
     from assets.icons9x9 import ICON_clr, ICON_wifi
     from util.display_segment import threeDigits
@@ -228,7 +237,7 @@ if es["oled"]:
         print("Err.oled")
         isOLED = False
 
-if es["temp"]:
+if ios["temp"]:
     print(">>> temp_init")
     from util.octopus import temp_init, get_temp
     ts = temp_init() # ts temp sensor
@@ -236,7 +245,7 @@ if es["temp"]:
     tempDisplay(temp)
 
 
-if es["relay"]:
+if ios["relay"]:
     print(">>> relay_init")
     from hydroponics.iot_garden import relay_init # relay.value(x)
     relayPump = relay_init()
@@ -245,7 +254,7 @@ if es["relay"]:
     relayPump.value(0)
 
 
-if es["fet"]:
+if ios["fet"]:
     print(">>> pwm_init")
     from hydroponics.iot_garden import pwm_init, pwm_fade_in
     pwmLed = pwm_init()
@@ -289,7 +298,7 @@ printLog(6,"start main loop >")
 displMessage("")
 timer_init()
 getFree(True)
-
+send_data() # firts test send data
 # ============================= main loop ==========================
 while True:
 
