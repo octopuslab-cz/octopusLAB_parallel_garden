@@ -1,8 +1,13 @@
-# this module is to setup your board
-# iotBoard for project parallel garden
-#
+"""
+this module is to setup your board 
+iotBoard for project parallel garden
+
+ampy -p /COM6 put ./hydroponics/iot_garden.py hydroponics/iot_garden.py
+from hydroponics.iot_garden import *
+"""
+
 import machine
-from machine import Pin, PWM, ADC
+from machine import Pin, ADC
 import time, os, ubinascii
 from util.pinout import set_pinout
 
@@ -21,20 +26,73 @@ adcL = machine.ADC(pin_adcL)
 pin_adcT = Pin(pinout.I39_PIN, Pin.IN)
 adcT = machine.ADC(pin_adcT)
 
-pin_relay = Pin(pinout.RELAY_PIN, Pin.OUT)
-pin_fet = Pin(pinout.MFET_PIN, Pin.OUT)
-pwm_fet = PWM(pin_fet, 500, 0)
+
+pin_pwm = pinout.MFET_PIN # iot - default
 
  
 def getGardenLibVer():
-    return "garden lib.ver: 28.2.2019"
+    return "garden lib.ver: 20.10.2019"
 
 # ----------------
+def relay_init(pin = pinout.RELAY_PIN):
+     relay = Pin(pin, Pin.OUT)
+     return relay
+
+
+def relay(pin, how):
+        pin.value(how)
+
+
+def demo_relay(relay, number=2, delay=3000):
+    for _ in range (0, number):
+        relay(1)
+        time.sleep_ms(delay)
+        relay(0)
+        time.sleep_ms(delay)
+
+
+def pwm_init(pin=pinout.MFET_PIN, duty = 0):
+     from machine import PWM
+     # pwm_fet = PWM(pin_fet, 500, 0)
+     pwm = PWM(Pin(pin, Pin.OUT), 500, duty)
+     return pwm
+
+
+def pwm_fet(pwm, duty, delay=10):
+    pwm.duty(duty)
+    time.sleep_ms(delay)
+
+
+def pwm_fade_in(pwm, r, m = 5, fmax = 3000):
+     # duty max - multipl us (2=2us) - fmax
+     f = 100
+     rs = 35
+
+     pwm.freq(f)
+     pwm.duty(1)
+     time.sleep_ms(rs*2)
+
+     pwm.duty(5)
+     time.sleep_ms(rs)
+
+     for i in range(5,rs):
+          pwm.duty(i)
+          pwm.freq(f)
+          time.sleep_ms(m*(rs-i+1))
+          f += int(fmax/rs) 
+
+     pwm.freq(fmax)
+     for i in range(rs, r):
+          pwm.duty(i)
+          time.sleep_ms(m)  
+
+
 def getAd2RAW(ani): # A/D RAW
      an1 = ani.read()
      an2 = ani.read()
      an = int((an1+an2)/2)
      return an
+
 
 def getADvolt(Debug): # AD > volts?
      an1 = adc.read()
@@ -71,6 +129,7 @@ def get_moisture():
     pwM.value(0)
     return(s)
 
+
 def fade_in_sw(p, r, m):
      # pin - range - multipl
      for i in range(r):
@@ -78,6 +137,7 @@ def fade_in_sw(p, r, m):
           time.sleep_us((r-i)*m*2) # multH/L *2
           p.value(1)
           time.sleep_us(i*m)
+
 
 def fade_out_sw(p, r, m):
      # pin - range - multipl
@@ -87,44 +147,6 @@ def fade_out_sw(p, r, m):
           p.value(0)
           time.sleep_us(i*m*2) 
 
-def fade_in(r, m = 5, fmax = 3000):
-     # duty max - multipl us (2=2us) - fmax
-     f = 100
-     rs = 35
-
-     pwm_fet.freq(f)
-     pwm_fet.duty(1)
-     time.sleep_ms(rs*2)
-
-     pwm_fet.duty(5)
-     time.sleep_ms(rs)
-
-     for i in range(5,rs):
-          pwm_fet.duty(i)
-          pwm_fet.freq(f)
-          time.sleep_ms(m*(rs-i+1))
-          f += int(fmax/rs) 
-
-     pwm_fet.freq(fmax)
-     for i in range(rs, r):
-          pwm_fet.duty(i)
-          time.sleep_ms(m)  
-
-     print("ok")                
-
-def relay(how):
-        pin_relay.value(how)
-
-def demo_relay(number=2, delay=3000):
-    for _ in range (0, number):
-        relay(1)
-        time.sleep_ms(delay)
-        relay(0)
-        time.sleep_ms(delay)
-
-def led_fet(duty, delay):
-    pwm_fet.duty(duty)
-    time.sleep_ms(delay)
 
 def demo_run():
     fade_in(1024)
