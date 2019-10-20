@@ -13,10 +13,10 @@ ampy -p /COM6 put ./hydroponics/iot_hydrop2.py main.py
 
 from time import sleep, sleep_ms
 from urandom import randint
-from machine import Pin, PWM, ADC, UART, RTC, Timer
+from machine import Pin, UART, RTC, Timer
 from util.pinout import set_pinout 
 from util.octopus import getFree, map, printLog, printTitle, oled_init, time_init, getVer, get_hhmm, w
-from hydroponics.iot_garden import led_fet, relay
+# from hydroponics.iot_garden import pwm_fet, relay
 
 ver = "0.51" # int(*100) > db
 # last update 20.10.2019 
@@ -27,8 +27,8 @@ printLog(1,"boot device >")
 pinout = set_pinout()
 led_numpin = pinout.BUILT_IN_LED # BUILT_IN_LED
 dspin = Pin(pinout.ONE_WIRE_PIN)  # Dallas temperature
-#button3 = Pin(pinout.BUTT3_PIN, Pin.IN, Pin.PULL_UP)
-button3 = Pin(0, Pin.IN, Pin.PULL_UP) # test - boot pin
+button3 = Pin(pinout.BUTT3_PIN, Pin.IN, Pin.PULL_UP)
+#button3 = Pin(0, Pin.IN, Pin.PULL_UP) # test - boot pin
 rtc = RTC() # real time
 tim1 = Timer(0)     # for main 10 sec timer 
 Debug = True
@@ -148,7 +148,8 @@ def runAction(): # todo: fix
             print("> light on")
             # displMessage("light ON",1)
             if (oldLightIntensity != lightIntensity):
-                led_fet(lightIntensity, 2000)
+                pwmLed.freq(2000)
+                pwmLed.duty(lightIntensity)
                 displMessage("light:" + str(lightIntensity),1)                
                 oldLightIntensity = lightIntensity
                 print("change intensity: "+ str(lightIntensity))
@@ -156,15 +157,15 @@ def runAction(): # todo: fix
         else:    
             print("> light on START")
             displMessage("light ON START",2) 
-            # led_fet(lightIntensity, 2000) # 1023 # max 255=1/4 512=1/2 ...
-            fade_in(lightIntensity)
+            # pwm_fet(lightIntensity, 2000) # 1023 # max 255=1/4 512=1/2 ...
+            pwm_fade_in(pwmLed, lightIntensity)
             prewLight = True 
             oldLightIntensity = lightIntensity
             
     else: 
         print("> light off") 
         # displMessage("light OFF",1)
-        led_fet(0, 2000) 
+        pwmLed.duty(0)
         prewLight = False 
     
     # --- pump
@@ -177,13 +178,13 @@ def runAction(): # todo: fix
         if (dayM == nodeMin) and (pumpStat == 0):
             print("relay ON")
             displMessage("relay ON",1)
-            relay(1)
+            relayPump.value(1)
             pumpStat = 1
 
         if (dayM == nodeMin + pumpDurat) and (pumpStat == 1):
             print("relay OFF")
             displMessage("relay OFF",1) 
-            relay(0)
+            relayPump.value(0)
             pumpStat = 0
     #except:
     #    print("runAction() > ERR.pump") 
@@ -207,6 +208,7 @@ if es["led"]:
 
 isOLED = False
 if es["oled"]:
+    print(">>> oled_init")
     from assets.icons9x9 import ICON_clr, ICON_wifi
     from util.display_segment import threeDigits
     isOLED = True
@@ -227,10 +229,28 @@ if es["oled"]:
         isOLED = False
 
 if es["temp"]:
+    print(">>> temp_init")
     from util.octopus import temp_init, get_temp
     ts = temp_init() # ts temp sensor
     temp = get_temp(*ts)
     tempDisplay(temp)
+
+
+if es["relay"]:
+    print(">>> relay_init")
+    from hydroponics.iot_garden import relay_init # relay.value(x)
+    relayPump = relay_init()
+    relayPump.value(1)
+    sleep(1)
+    relayPump.value(0)
+
+
+if es["fet"]:
+    print(">>> pwm_init")
+    from hydroponics.iot_garden import pwm_init, pwm_fade_in
+    pwmLed = pwm_init()
+    pwm_fade_in(pwmLed, 1000)
+    pwmLed.duty(0)
 
 # --------------------------------
 check_point(3,"device config")
