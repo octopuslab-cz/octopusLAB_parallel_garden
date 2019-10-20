@@ -120,12 +120,12 @@ def send_data():
 it = 0 # every 10 sec.
 def timerSend():
     global it
-    it = it+1
-    print(">"+str(it))
+    it = it + 1
+    print(">" + str(it))
 
     if (it == 6*minute): # 6 = 1min / 60 = 10min
         if Debug: print("10 min. > send data:")
-        sendData() # read sensors and send data
+        send_data() # read sensors and send data
         it = 0 
 
 
@@ -182,7 +182,7 @@ def runAction(): # todo: fix
     #try 
     for nodeM in pumpNodes:
         nodeMin = int(nodeM)*60
-        if Debug: print("dayMinutes: "+ str(dayM) + " :?: " + str(nodeMin) + " relay/pump Status: " + str(pumpStat))
+        # if Debug: print("dayMinutes: "+ str(dayM) + " :?: " + str(nodeMin) + " relay/pump Status: " + str(pumpStat))
         # print(str(nodeMin))
         if (dayM == nodeMin) and (pumpStat == 0):
             print("relay ON")
@@ -207,7 +207,7 @@ from hydroponics.config import load_config, load_url_config, print_config, load_
 # test
 ios = load_env_setup()
 printTitle("env.setup")
-print_env_setup(es)
+print_env_setup(ios)
 # print(es["relay"])
 
 if ios["led"]:
