@@ -130,6 +130,11 @@ def send_data():
         print(send_data_post("temp",temp), str(temp))
         sleep(1)
 
+    if ios["mois"]:
+        mois1 = get_moisture()
+        print(send_data_post("mois1",mois1), str(mois1))
+        sleep(1)
+
     if ios["light"]: # must exist: ios 0 or 1
         light = 0 # todo
         sleep(1)
@@ -258,6 +263,15 @@ if ios["temp"]:
     ts = temp_init() # ts := temp sensor
     temp = get_temp(*ts)
     tempDisplay(temp)
+
+
+if ios["mois"]:
+    print(">>> moisture_init")
+    from machine import ADC
+    from hydroponics.iot_garden import get_moisture
+    pwM = Pin(pinout.PWM1_PIN, Pin.OUT)     # moisture
+    pin_adcM = Pin(pinout.I35_PIN, Pin.IN)
+    adcM = ADC(pin_adcM)
 
 
 if ios["relay"]:
