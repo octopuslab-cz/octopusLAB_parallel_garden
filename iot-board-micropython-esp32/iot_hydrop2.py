@@ -1,6 +1,6 @@
 """
 sensor_log > iot_hydrop2
-for #hydroponics IoT monitoring and control system
+for #hydroponics IoT monitoring and control system - Parallel garden 2 (pg2)
 - SSD1306 OLED display
 - DS18B20 "Dallas" temperature sensor
 - BH1750 light sensor
@@ -14,11 +14,11 @@ ampy -p /COM6 put ./hydroponics/iot_hydrop2.py main.py
 from time import sleep, sleep_ms
 from urandom import randint
 from machine import Pin, UART, RTC, Timer
-from util.pinout import set_pinout 
+from util.pinout import set_pinout
 from util.octopus import getFree, map, printLog, printTitle, oled_init, time_init, getVer, get_hhmm, w
 from hydroponics.send_data import send_data_post
 
-ver = "0.51" # int(*100) > db
+ver = 0.51 # int(*100) > db
 # last update 20.10.2019 
 getFree(True)
 
@@ -33,7 +33,7 @@ rtc = RTC() # real time
 tim1 = Timer(0)     # for main 10 sec timer 
 Debug = True
 
-print("sensor_log2 - version: " + ver)
+print("sensor_log2 - version: " + str(ver))
 print(getVer())
 #print(getGardenLibVer())
 #deviceID = str(get_eui())
@@ -197,9 +197,16 @@ def runAction(): # todo: fix
             pumpStat = 0
     #except:
     #    print("runAction() > ERR.pump") 
-    
 
 sleep(1)
+if not button3.value():
+    print("Starting webserver > ")
+    try:
+        w()
+        web_server()
+    except Exception as e:
+       print("timeDisplay() Exception: {0}".format(e))
+
 # --------------------------------
 printLog(2,"init/env.setup >")
 from hydroponics.config import load_config, load_url_config, print_config, load_env_setup, print_env_setup
@@ -225,7 +232,7 @@ if ios["oled"]:
         oled = oled_init()
         sleep(1)
         oled.clear()
-        displMessage("version: "+ver,1)
+        displMessage("version: " + str(ver),1)
         for _ in range(5):
             randval = randint(1, 4000)
             valmap = map(randval, 0, 4000, 0, 125)
@@ -240,15 +247,15 @@ if ios["oled"]:
 if ios["temp"]:
     print(">>> temp_init")
     from util.octopus import temp_init, get_temp
-    ts = temp_init() # ts temp sensor
+    ts = temp_init() # ts := temp sensor
     temp = get_temp(*ts)
     tempDisplay(temp)
 
 
 if ios["relay"]:
     print(">>> relay_init")
-    from hydroponics.iot_garden import relay_init # relay.value(x)
-    relayPump = relay_init()
+    from util.iot import Relay
+    relayPump = Relay()
     relayPump.value(1)
     sleep(1)
     relayPump.value(0)
@@ -282,23 +289,31 @@ oled.text("wifi",99, 1)
 oled.draw_icon(ICON_clr, 88 ,0)
 oled.draw_icon(ICON_wifi, 88 ,0) 
 try:
-    w()
+    cw = w()
     time_init()
     timeDisplay()
 except:
     oled.draw_icon(ICON_clr, 88 ,0)
     displMessage("Err.w_connect")
 
-cw = load_url_config() # from "web"
-print(cw["version"]) # print(cw["pumpnodes"][1])
-print_config(cw)
+uc = load_url_config() # from "web"
+try:
+    print(uc["version"]) # print(uc["pumpnodes"][1])
+    print_config(uc)
+except:
+    print("Err.url_config")
 
 
 printLog(6,"start main loop >")
 displMessage("")
 timer_init()
 getFree(True)
+
+print(send_data_post("pg2_ver",int(ver*100)))
+sleep(2)
 send_data() # firts test send data
+
+
 # ============================= main loop ==========================
 while True:
 
