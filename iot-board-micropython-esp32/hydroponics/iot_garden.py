@@ -34,23 +34,6 @@ def getGardenLibVer():
     return "garden lib.ver: 20.10.2019"
 
 # ----------------
-def relay_init(pin = pinout.RELAY_PIN):
-     relay = Pin(pin, Pin.OUT)
-     return relay
-
-
-def relay(pin, how):
-        pin.value(how)
-
-
-def demo_relay(relay, number=2, delay=3000):
-    for _ in range (0, number):
-        relay(1)
-        time.sleep_ms(delay)
-        relay(0)
-        time.sleep_ms(delay)
-
-
 def pwm_init(pin=pinout.MFET_PIN, duty = 0):
      from machine import PWM
      # pwm_fet = PWM(pin_fet, 500, 0)
