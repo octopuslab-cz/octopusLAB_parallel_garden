@@ -41,6 +41,23 @@ print(getVer())
 startLight = 0
 stopLight = 1
 
+
+sleep(1)
+if not button3.value():
+    from util.octopus import web_server
+    print("Starting webserver > ")
+    try:
+        w()
+        web_server()
+    except Exception as e:
+       print("timeDisplay() Exception: {0}".format(e))
+       # todo:  Exception: memory allocation failed
+
+    print("> stop main program")
+    while True:
+        sleep(10)
+
+
 def timeDisplay():
     xt = 88 # display time possition
     yt = 38
@@ -197,15 +214,6 @@ def runAction(): # todo: fix
             pumpStat = 0
     #except:
     #    print("runAction() > ERR.pump") 
-
-sleep(1)
-if not button3.value():
-    print("Starting webserver > ")
-    try:
-        w()
-        web_server()
-    except Exception as e:
-       print("timeDisplay() Exception: {0}".format(e))
 
 # --------------------------------
 printLog(2,"init/env.setup >")
