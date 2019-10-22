@@ -340,10 +340,11 @@ send_data() # firts test send data
 while True:
 
     #wifi.handle_wifi()
-    timeDisplay()
-    runAction()
-    sleep(0.3)
     sensorsDisplay()
+    runAction()
+    timeDisplay()
+
+    sleep(0.3)
 
     if not button3.value():
         print("1 > butt3")
