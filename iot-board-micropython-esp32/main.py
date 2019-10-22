@@ -18,8 +18,8 @@ from util.pinout import set_pinout
 from util.octopus import getFree, map, printLog, printTitle, oled_init, time_init, getVer, get_hhmm, w
 from hydroponics.send_data import send_data_post
 
-ver = 0.51 # int(*100) > db
-# last update 20.10.2019 
+ver = 0.52 # int(*100) > db
+# last update 22.10.2019 
 getFree(True)
 
 # --------------------------------
@@ -125,17 +125,17 @@ def check_point(num, mess):
     getFree(True)
 
 def send_data():
-    if ios["temp"]:
+    if ios.get("temp"):
         temp = int(get_temp(*ts)*10)
         print(send_data_post("temp",temp), str(temp))
         sleep(1)
 
-    if ios["mois"]:
+    if ios.get("mois"):
         mois1 = get_moisture()
         print(send_data_post("mois1",mois1), str(mois1))
         sleep(1)
 
-    if ios["light"]: # must exist: ios 0 or 1
+    if ios.get("light"): # must exist: ios 0 or 1
         light = 0 # todo
         sleep(1)
 
@@ -157,7 +157,7 @@ def timer_init():
 
 
 def sensorsDisplay():
-    if ios["temp"]:
+    if ios.get("temp"):
         temp = get_temp(*ts)
         tempDisplay(temp)
 
@@ -230,13 +230,13 @@ printTitle("env.setup")
 print_env_setup(ios)
 # print(es["relay"])
 
-if ios["led"]:
+if ios.get("led"):
     from util.led import Led
     led = Led(led_numpin)
     led.blink()
 
 isOLED = False
-if ios["oled"]:
+if ios.get("oled"):
     print(">>> oled_init")
     from assets.icons9x9 import ICON_clr, ICON_wifi
     from util.display_segment import threeDigits
@@ -265,7 +265,7 @@ if ios.get("temp"):
     tempDisplay(temp)
 
 
-if ios["mois"]:
+if ios.get("mois"):
     print(">>> moisture_init")
     from machine import ADC
     from hydroponics.iot_garden import get_moisture
@@ -274,7 +274,7 @@ if ios["mois"]:
     adcM = ADC(pin_adcM)
 
 
-if ios["relay"]:
+if ios.get("relay"):
     print(">>> relay_init")
     from util.iot import Relay
     relayPump = Relay()
@@ -283,12 +283,21 @@ if ios["relay"]:
     relayPump.value(0)
 
 
-if ios["fet"]:
+if ios.get("fet"):
     print(">>> pwm_init")
     from hydroponics.iot_garden import pwm_init, pwm_fade_in
     pwmLed = pwm_init()
     pwm_fade_in(pwmLed, 1000)
     pwmLed.duty(0)
+
+
+if ios.get("light"):
+    print(">>> light sensor init")
+    from lib.bh1750 import BH1750
+    try:
+        sbh = BH1750(i2c)
+    except:
+        pass
 
 # --------------------------------
 check_point(3,"device config")
