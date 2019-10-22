@@ -64,7 +64,7 @@ def timeDisplay():
     if not isOLED:
         return
     try:
-       oled.fill_rect(xt,yt,xt+50,yt+10,0)
+       oled.fill_rect(xt,yt,40,12,0)
        oled.text(get_hhmm(), xt, yt)
        oled.show()
     except Exception as e:
@@ -257,7 +257,7 @@ if ios["oled"]:
         print("Err.oled")
         isOLED = False
 
-if ios["temp"]:
+if ios.get("temp"):
     print(">>> temp_init")
     from util.octopus import temp_init, get_temp
     ts = temp_init() # ts := temp sensor
