@@ -15,7 +15,7 @@ from time import sleep, sleep_ms
 from urandom import randint
 from machine import Pin, UART, RTC, Timer
 from util.pinout import set_pinout
-from util.octopus import getFree, map, printLog, printTitle, oled_init, time_init, getVer, get_hhmm, w
+from util.octopus import getFree, map, printLog, printTitle, i2c_init, oled_init, time_init, getVer, get_hhmm, w
 from hydroponics.send_data import send_data_post
 
 ver = 0.52 # int(*100) > db
@@ -138,6 +138,11 @@ def send_data():
     if ios.get("light"): # must exist: ios 0 or 1
         light = 0 # todo
         sleep(1)
+        try:
+            light = int(sbh.luminance(BH1750.ONCE_HIRES_1))
+            print(send_data_post("ligh1",light), str(light))
+        except:
+            pass
 
 it = 0 # every 10 sec.
 def timerSend():
@@ -229,6 +234,7 @@ ios = load_env_setup()
 printTitle("env.setup")
 print_env_setup(ios)
 # print(es["relay"])
+i2c = i2c_init()
 
 if ios.get("led"):
     from util.led import Led
@@ -296,6 +302,8 @@ if ios.get("light"):
     from lib.bh1750 import BH1750
     try:
         sbh = BH1750(i2c)
+        testLight = int(sbh.luminance(BH1750.ONCE_HIRES_1))
+        print("light > " + str(testLight))
     except:
         pass
 
