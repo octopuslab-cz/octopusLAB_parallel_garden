@@ -126,7 +126,7 @@ def check_point(num, mess):
 
 def send_data():
     if ios.get("temp"):
-        temp = int(get_temp(*ts)*10)
+        temp = int(ts.get_temp()*10)
         print(send_data_post("temp",temp), str(temp))
         sleep(1)
 
@@ -163,7 +163,7 @@ def timer_init():
 
 def sensorsDisplay():
     if ios.get("temp"):
-        temp = get_temp(*ts)
+        temp = ts.get_temp()
         tempDisplay(temp)
 
         light = randint(1, 10) # test
@@ -265,9 +265,9 @@ if ios.get("oled"):
 
 if ios.get("temp"):
     print(">>> temp_init")
-    from util.octopus import temp_init, get_temp
+    from util.octopus import temp_init
     ts = temp_init() # ts := temp sensor
-    temp = get_temp(*ts)
+    temp = ts.get_temp() # get_temp(index) <- default index 0
     tempDisplay(temp)
 
 
