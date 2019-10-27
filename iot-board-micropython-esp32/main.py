@@ -2,23 +2,24 @@
 sensor_log > iot_hydrop2
 for #hydroponics IoT monitoring and control system - Parallel garden 2 (pg2)
 - SSD1306 OLED display
-- DS18B20 "Dallas" temperature sensor
-- BH1750 light sensor
-- moisture sensor and next A/D (light/temp)
+- DS18B20 Dallas temperature sensor [C]
+- BH1750 light sensor [Lux]
+- moisture sensor and next A/D (light/temp) [RAW]
 control: 
 PWM LED and relay for water pump
 
-ampy -p /COM6 put ./hydroponics/iot_hydrop2.py main.py
+ampy -p /COM6 put ./hydroponics/main.py main.py
 """
 
 from time import sleep, sleep_ms
+from math import log10
 from urandom import randint
 from machine import Pin, UART, RTC, Timer
 from util.pinout import set_pinout
 from util.octopus import getFree, map, printLog, printTitle, i2c_init, oled_init, time_init, getVer, get_hhmm, w
 from hydroponics.send_data import send_data_post
 
-ver = 0.52 # int(*100) > db
+ver = 0.53 # int(*100) > db
 # last update 22.10.2019 
 getFree(True)
 
@@ -166,8 +167,11 @@ def sensorsDisplay():
         temp = ts.get_temp()
         tempDisplay(temp)
 
-        light = randint(1, 10) # test
-        displBar(light)
+    if ios.get("light"):
+        #light = randint(1, 10) # test
+        #displBar(light)
+        numlux = sbh.luminance(BH1750.ONCE_HIRES_1) 
+        displBar(int(log10(numlux+1)*2)) 
 
 
 def runAction(): # todo: fix
@@ -361,7 +365,7 @@ while True:
     runAction()
     timeDisplay()
 
-    sleep(0.3)
+    sleep(0.2)
 
     if not button3.value():
         print("1 > butt3")
