@@ -9,6 +9,13 @@ control:
 PWM LED and relay for water pump
 
 ampy -p /COM6 put ./hydroponics/main.py main.py
+
+[1] boot
+[2] init/env.setup
+[3] device config
+[4] procedures / timer
+[5] connect to netw.
+[6] start main loop
 """
 
 from time import sleep, sleep_ms
@@ -229,6 +236,12 @@ def runAction(): # todo: fix
     #except:
     #    print("runAction() > ERR.pump") 
 
+def button3Action():
+    print("test button3")
+    from util.buzzer.melody import jingle1
+    piezzo.play_melody(jingle1)
+
+
 # --------------------------------
 printLog(2,"init/env.setup >")
 from hydroponics.config import load_config, load_url_config, print_config, load_env_setup, print_env_setup
@@ -244,6 +257,11 @@ if ios.get("led"):
     from util.led import Led
     led = Led(led_numpin)
     led.blink()
+
+piezzo = None
+if ios.get('piezzo'): # todo: fix second init
+    from util.buzzer import Buzzer
+    piezzo = Buzzer(pinout.PIEZZO_PIN)
 
 isOLED = False
 if ios.get("oled"):
@@ -328,6 +346,7 @@ sleep(1)
 
 # --------------------------------
 check_point(5,"connect to netw.")
+oled.text('octopusLAB', 0, 1)
 oled.text("wifi",99, 1)
 oled.draw_icon(ICON_clr, 88 ,0)
 oled.draw_icon(ICON_wifi, 88 ,0) 
@@ -370,5 +389,5 @@ while True:
     if not button3.value():
         print("1 > butt3")
         displMessage("Basic info >",2)
-        #butt3Action()
+        button3Action()
  
