@@ -26,8 +26,8 @@ from util.pinout import set_pinout
 from util.octopus import getFree, map, printLog, printTitle, i2c_init, oled_init, time_init, getVer, get_hhmm, w
 from hydroponics.send_data import send_data_post
 
-ver = 0.53 # int(*100) > db
-# last update 22.10.2019 
+ver = 0.54 # int(*100) > db
+# last update 31.10.2019 
 getFree(True)
 
 # --------------------------------
@@ -378,16 +378,19 @@ send_data() # firts test send data
 
 # ============================= main loop ==========================
 while True:
+    try:
+        # wifi.handle_wifi()
+        sensorsDisplay()
+        runAction()
+        timeDisplay()
 
-    #wifi.handle_wifi()
-    sensorsDisplay()
-    runAction()
-    timeDisplay()
+        sleep(0.2)
 
-    sleep(0.2)
+        if not button3.value():
+            print("1 > butt3")
+            displMessage("Basic info >",2)
+            button3Action()
 
-    if not button3.value():
-        print("1 > butt3")
-        displMessage("Basic info >",2)
-        button3Action()
- 
+    except Exception as e:
+       print("timeDisplay() Exception: {0}".format(e))
+       sleep(1)
