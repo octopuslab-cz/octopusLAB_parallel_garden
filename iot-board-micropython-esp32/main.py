@@ -26,8 +26,8 @@ from util.pinout import set_pinout
 from util.octopus import getFree, map, printLog, printTitle, i2c_init, oled_init, time_init, getVer, get_hhmm, w
 from hydroponics.send_data import send_data_post
 
-ver = 0.54 # int(*100) > db
-# last update 31.10.2019 
+ver = 0.55 # int(*100) > db
+# last update 3.11.2019 
 getFree(True)
 
 # --------------------------------
@@ -218,6 +218,7 @@ def runAction(): # todo: fix
     # --- pump
     dayM = hh*60 + mm
     #try 
+
     for nodeM in pumpNodes:
         nodeMin = int(nodeM)*60
         # if Debug: print("dayMinutes: "+ str(dayM) + " :?: " + str(nodeMin) + " relay/pump Status: " + str(pumpStat))
@@ -245,6 +246,10 @@ def button3Action():
 # --------------------------------
 printLog(2,"init/env.setup >")
 from hydroponics.config import load_config, load_url_config, print_config, load_env_setup, print_env_setup
+# extern config edit: ctr+c -> config.setup()
+from config import Config
+keys = ["startlight","stoplight","lightintensity","pumpnodes","pumpduration","timeinterval"]
+config = Config("garden", keys)
 
 # test
 ios = load_env_setup()
@@ -339,18 +344,27 @@ stopLight = cf["stoplight"]
 prewLight = False
 oldLightIntensity = 0
 lightIntensity = cf["lightintensity"]
+
 pumpNodes = cf["pumpnodes"]
+if type(pumpNodes) is str:
+    print("convert string pumpnodes to list (array) >")
+    try:
+        pumpNodes = list(pumpNodes[1:-1].split(",")) # string "[a,b]" to list [a,b]
+    except Exception as e:
+       print("timeDisplay() Exception: {0}".format(e))
+    print(pumpNodes)
+
 pumpDurat = cf["pumpduration"]
 pumpStat = 0
 sleep(1)
 
 # --------------------------------
 check_point(5,"connect to netw.")
-oled.text('octopusLAB', 0, 1)
-oled.text("wifi",99, 1)
-oled.draw_icon(ICON_clr, 88 ,0)
-oled.draw_icon(ICON_wifi, 88 ,0) 
 try:
+    oled.text('octopusLAB', 0, 1)
+    oled.text("wifi",99, 1)
+    oled.draw_icon(ICON_clr, 88 ,0)
+    oled.draw_icon(ICON_wifi, 88 ,0) 
     cw = w()
     time_init()
     timeDisplay()
