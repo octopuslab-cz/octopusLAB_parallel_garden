@@ -133,7 +133,7 @@ def check_point(num, mess):
     getFree(True)
 
 def send_data():
-    if ios.get("temp"):
+    if ts:
         temp = int(ts.get_temp()*10)
         print(send_data_post("temp",temp), str(temp))
         sleep(1)
@@ -143,7 +143,7 @@ def send_data():
         print(send_data_post("mois1",mois1), str(mois1))
         sleep(1)
 
-    if ios.get("light"): # must exist: ios 0 or 1
+    if sbh:
         light = 0 # todo
         sleep(1)
         try:
@@ -170,11 +170,16 @@ def timer_init():
 
 
 def sensorsDisplay():
-    if ios.get("temp"):
-        temp = ts.get_temp()
+    if ts:
+        try:
+            temp = ts.get_temp()
+        except Exception as e:
+            print("Error reading dallas temperature")
+            temp = 99.9
+
         tempDisplay(temp)
 
-    if ios.get("light"):
+    if sbh:
         #light = randint(1, 10) # test
         #displBar(light)
         numlux = sbh.luminance(BH1750.ONCE_HIRES_1) 
@@ -290,12 +295,12 @@ if ios.get("oled"):
         print("Err.oled")
         isOLED = False
 
+ts = None
 if ios.get("temp"):
     print(">>> temp_init")
     from util.octopus import temp_init
     ts = temp_init() # ts := temp sensor
-    temp = ts.get_temp() # get_temp(index) <- default index 0
-    tempDisplay(temp)
+    sensorsDisplay()
 
 
 if ios.get("mois"):
@@ -307,6 +312,7 @@ if ios.get("mois"):
     adcM = ADC(pin_adcM)
 
 
+relayPump = None
 if ios.get("relay"):
     print(">>> relay_init")
     from util.iot import Relay
@@ -316,6 +322,7 @@ if ios.get("relay"):
     relayPump.value(0)
 
 
+pwmLed = None
 if ios.get("fet"):
     print(">>> pwm_init")
     from hydroponics.iot_garden import pwm_init, pwm_fade_in
@@ -324,6 +331,7 @@ if ios.get("fet"):
     pwmLed.duty(0)
 
 
+sbh = None
 if ios.get("light"):
     print(">>> light sensor init")
     from lib.bh1750 import BH1750
