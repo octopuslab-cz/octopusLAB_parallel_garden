@@ -258,7 +258,8 @@ def button3Action():
 # --------------------------------
 printLog(2,"init/env.setup >")
 
-from hydroponics.config import load_env_setup, print_env_setup
+# Deprecated, do not use
+#from hydroponics.config import load_env_setup, print_env_setup
 # extern config edit: ctr+c -> config.setup()
 from config import Config
 garden_keys = ["startlight", "stoplight", "lightintensity", "pumpnodes", "pumpduration", "timeinterval", "urlpost", "place"]
@@ -278,11 +279,25 @@ gardern_conf_data = [
 ]
 config = Config("garden", garden_keys, gardern_conf_data)
 
-# test
-ios = load_env_setup()
+ios_keys = ["led", "ws", "light", "temp", "mois", "cmois", "ad0", "ad1", "ad2", "fet", "relay"]
+ios_conf_data=[
+    ["built_in_led","led"],
+    ["WS rgb led","ws"],
+    ["i2c light sensor","light"],
+    ["temperature (dall.)","temp"],
+    ["A/D moisture","mois"],
+    ["A/D capacit moist.","cmois"],
+    ["A/D inp.voltage","ad0"],
+    ["A/D photoresist.","ad1"],
+    ["A/D thermistor","ad2"],
+    ["mosFet pwm led","fet"],
+    ["relay","relay"]
+]
+
+ios = Config("io", ios_keys, ios_conf_data)
 printTitle("env.setup")
-print_env_setup(ios)
-# print(es["relay"])
+ios.print()
+
 i2c = i2c_init()
 
 if ios.get("led"):
