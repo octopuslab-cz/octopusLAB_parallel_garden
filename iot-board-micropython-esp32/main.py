@@ -258,11 +258,25 @@ def button3Action():
 # --------------------------------
 printLog(2,"init/env.setup >")
 
-from hydroponics.config import print_config, load_env_setup, print_env_setup
+from hydroponics.config import load_env_setup, print_env_setup
 # extern config edit: ctr+c -> config.setup()
 from config import Config
-keys = ["startlight","stoplight","lightintensity","pumpnodes","pumpduration","timeinterval", "urlpost", "place"]
-config = Config("garden", keys)
+garden_keys = ["startlight","stoplight","lightintensity","pumpnodes","pumpduration","timeinterval", "urlpost", "place"]
+gardern_conf_data = [
+    ["config version", "version"],
+    ["place (name)", "place"],
+    ["temperature offset", "tempoffset"],
+    ["start light [hour]", "startlight"],
+    ["stop light [hour]", "stoplight"],
+    ["light intensity (0-1023)", "lightintensity"],
+    ["pump time nodes", "pumpnodes"],
+    ["pump duration", "pumpduration"],
+    ["time interval [minutes]", "timeinterval"],
+    ["start: run demo", "rundemo"],
+    ["cloud config", "cloudconfig"],
+    ["cloud update", "cloudupdate"]
+]
+config = Config("garden", garden_keys, gardern_conf_data)
 
 # test
 ios = load_env_setup()
@@ -350,18 +364,17 @@ if ios.get("light"):
 
 # --------------------------------
 check_point(3,"device config")
-cf = config.config
-print_config(cf)
+config.print()
 print("device new config: ctrl+c > config.setup()")
 
-minute = cf["timeinterval"]
-startLight = cf["startlight"]
-stopLight = cf["stoplight"]
+minute = config.get("timeinterval")
+startLight = config.get("startlight")
+stopLight = config.get("stoplight")
 prewLight = False
 oldLightIntensity = 0
-lightIntensity = cf["lightintensity"]
+lightIntensity = config.get("lightintensity")
 
-pumpNodes = cf["pumpnodes"]
+pumpNodes = config.get("pumpnodes")
 if type(pumpNodes) is str:
     print("convert string pumpnodes to list (array) >")
     try:
@@ -370,7 +383,7 @@ if type(pumpNodes) is str:
        print("timeDisplay() Exception: {0}".format(e))
     print(pumpNodes)
 
-pumpDurat = cf["pumpduration"]
+pumpDurat = config.get("pumpduration")
 pumpStat = 0
 sleep(1)
 

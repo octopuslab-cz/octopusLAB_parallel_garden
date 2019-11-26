@@ -17,8 +17,8 @@ class SendData():
 
 class SendHydroponicsData(SendData):
     def __init__(self, config):
-        self.urlPOST = config.config.get("urlpost") # "http://www.yourweb.org/iot18/add18.php"
-        self.place = config.config.get("place")
+        self.urlPOST = config.get("urlpost") # "http://www.yourweb.org/iot18/add18.php"
+        self.place = config.get("place")
         self.deviceID = Env.uID
 
     """
