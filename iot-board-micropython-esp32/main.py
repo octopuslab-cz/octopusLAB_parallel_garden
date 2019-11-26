@@ -348,6 +348,8 @@ if ios.get("light"):
 check_point(3,"device config")
 cf = load_config() # from file
 print_config(cf)
+print("device new config: ctrl+c > config.setup()")
+
 minute = cf["timeinterval"]
 startLight = cf["startlight"]
 stopLight = cf["stoplight"]
