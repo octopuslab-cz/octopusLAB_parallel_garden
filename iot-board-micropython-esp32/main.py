@@ -49,6 +49,8 @@ print(getVer())
 startLight = 0
 stopLight = 1
 
+piezzo = None
+isOLED = False
 ts = None
 sbh = None
 pwmLed = None
@@ -272,12 +274,10 @@ if ios.get("led"):
     led = Led(led_numpin)
     led.blink()
 
-piezzo = None
 if ios.get('piezzo'): # todo: fix second init
     from util.buzzer import Buzzer
     piezzo = Buzzer(pinout.PIEZZO_PIN)
 
-isOLED = False
 if ios.get("oled"):
     print(">>> oled_init")
     from assets.icons9x9 import ICON_clr, ICON_wifi
@@ -303,6 +303,8 @@ if ios.get("temp"):
     print(">>> temp_init")
     from util.octopus import temp_init
     ts = temp_init() # ts := temp sensor
+    if len(ts.ts) == 0:
+        ts = None
     sensorsDisplay()
 
 
