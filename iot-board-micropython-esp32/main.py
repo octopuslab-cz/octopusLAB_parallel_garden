@@ -310,7 +310,9 @@ if ios.get("mois"):
     pwM = Pin(pinout.PWM1_PIN, Pin.OUT)     # moisture
     pin_adcM = Pin(pinout.I35_PIN, Pin.IN)
     adcM = ADC(pin_adcM)
-
+    if ios.get("mois"):
+        adcM.adc.atten(ADC.ATTN_2_5DB)
+        
 
 relayPump = None
 if ios.get("relay"):
