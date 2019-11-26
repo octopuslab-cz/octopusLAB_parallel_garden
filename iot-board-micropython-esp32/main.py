@@ -318,7 +318,7 @@ if ios.get("mois"):
     pin_adcM = Pin(pinout.I35_PIN, Pin.IN)
     adcM = ADC(pin_adcM)
     if ios.get("cmois"):
-        adcM.adc.atten(ADC.ATTN_2_5DB)
+        adcM.atten(ADC.ATTN_2_5DB)
         
 
 if ios.get("relay"):
