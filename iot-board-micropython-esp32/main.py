@@ -49,6 +49,10 @@ print(getVer())
 startLight = 0
 stopLight = 1
 
+ts = None
+sbh = None
+pwmLed = None
+relayPump = None
 
 sleep(1)
 if not button3.value():
@@ -295,7 +299,6 @@ if ios.get("oled"):
         print("Err.oled")
         isOLED = False
 
-ts = None
 if ios.get("temp"):
     print(">>> temp_init")
     from util.octopus import temp_init
@@ -314,7 +317,6 @@ if ios.get("mois"):
         adcM.adc.atten(ADC.ATTN_2_5DB)
         
 
-relayPump = None
 if ios.get("relay"):
     print(">>> relay_init")
     from util.iot import Relay
@@ -324,7 +326,6 @@ if ios.get("relay"):
     relayPump.value(0)
 
 
-pwmLed = None
 if ios.get("fet"):
     print(">>> pwm_init")
     from hydroponics.iot_garden import pwm_init, pwm_fade_in
@@ -333,7 +334,6 @@ if ios.get("fet"):
     pwmLed.duty(0)
 
 
-sbh = None
 if ios.get("light"):
     print(">>> light sensor init")
     from lib.bh1750 import BH1750
