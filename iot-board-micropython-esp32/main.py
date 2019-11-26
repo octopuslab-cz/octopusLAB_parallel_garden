@@ -39,7 +39,12 @@ dspin = Pin(pinout.ONE_WIRE_PIN)  # Dallas temperature
 button3 = Pin(pinout.BUTT3_PIN, Pin.IN, Pin.PULL_UP)
 #button3 = Pin(0, Pin.IN, Pin.PULL_UP) # test - boot pin
 rtc = RTC() # real time
-tim1 = Timer(0)     # for main 10 sec timer 
+tim1 = Timer(0)     # for sender timer
+tim2 = Timer(1)     # for action timer
+
+tim1lock = _thread.allocate_lock()
+tim2lock = _thread.allocate_lock()
+
 Debug = True
 
 print("sensor_log2 - version: " + str(ver))
@@ -159,21 +164,28 @@ def send_data():
         except:
             pass
 
+    if tim1lock.locked():
+        tim1lock.release()
+
 it = 0 # every 10 sec.
 def timerSend():
+    if tim1lock.locked():
+        return
+
+    tim1lock.acquire()
+
     global it
     it = it + 1
     print(">" + str(it))
 
     if (it == 6*minute): # 6 = 1min / 60 = 10min
         if Debug: print("10 min. > send data:")
-        _thread.start_new_thread(send_data, ()) # read sensors and send data
-        it = 0 
-
-
-def timer_init():
-    printTitle("timer init > stop: tim1.deinit()")
-    tim1.init(period=10000, mode=Timer.PERIODIC, callback=lambda t:timerSend())
+        #_thread.start_new_thread(send_data, ()) # read sensors and send data
+        _thread.start_new_thread(send_data, ())
+        it = 0
+    else:
+        if tim1lock.locked():
+            tim1lock.release()
 
 
 def sensorsDisplay():
@@ -195,6 +207,11 @@ def sensorsDisplay():
 
 def runAction(): # todo: fix
     # --- light
+    if tim2lock.locked():
+        return
+
+    tim2lock.acquire()
+
     global prewLight, pumpStat, oldLightIntensity
 
     hh=int(rtc.datetime()[4])
@@ -248,6 +265,37 @@ def runAction(): # todo: fix
             pumpStat = 0
     #except:
     #    print("runAction() > ERR.pump") 
+    tim2lock.release()
+
+def start_timer_sender():
+    printTitle("timer sender > stop: stop_timer_sender()")
+    tim1.init(period=10000, mode=Timer.PERIODIC, callback=lambda t:timerSend())
+
+
+def start_timer_action():
+    printTitle("timer action > stop: stop_timer_action()")
+    tim2.init(period=1000, mode=Timer.PERIODIC, callback=lambda t:runAction())
+
+
+def stop_timer_sender():
+    printTitle("Stopping sender timer")
+    tim1.deinit()
+
+
+def stop_timer_action():
+    printTitle("Stopping action timer")
+    tim2.deinit()
+
+
+def startall():
+    start_timer_action()
+    start_timer_sender()
+
+
+def stopall():
+    stop_timer_action()
+    stop_timer_sender()
+
 
 def button3Action():
     print("test button3")
@@ -430,20 +478,17 @@ sender = SendHydroponicsData(config)
 
 check_point(7,"start main loop >")
 displMessage("")
-timer_init()
+start_timer_sender()
 getFree(True)
 
 print(sender.send_form_data("pg2_ver",int(ver*100)))
-sleep(2)
-send_data() # firts test send data
-
+start_timer_action()
 
 # ============================= main loop ==========================
 while True:
     try:
         wifi.handle_wifi()
         sensorsDisplay()
-        runAction()
         timeDisplay()
 
         sleep(0.2)
