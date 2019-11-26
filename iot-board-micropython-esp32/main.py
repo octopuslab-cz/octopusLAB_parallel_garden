@@ -24,7 +24,8 @@ from urandom import randint
 from machine import Pin, UART, RTC, Timer
 from util.pinout import set_pinout
 from util.octopus import getFree, map, printLog, printTitle, i2c_init, oled_init, time_init, getVer, get_hhmm, w
-from hydroponics.send_data import send_data_post
+from hydroponics.send_data import SendHydroponicsData
+import _thread
 
 ver = 0.55 # int(*100) > db
 # last update 3.11.2019 
@@ -141,12 +142,12 @@ def check_point(num, mess):
 def send_data():
     if ts:
         temp = int(ts.get_temp()*10)
-        print(send_data_post("temp",temp), str(temp))
+        print(sender.send_form_data("temp",temp), str(temp))
         sleep(1)
 
     if ios.get("mois"):
         mois1 = get_moisture()
-        print(send_data_post("mois1",mois1), str(mois1))
+        print(sender.send_form_data("mois1",mois1), str(mois1))
         sleep(1)
 
     if sbh:
@@ -154,7 +155,7 @@ def send_data():
         sleep(1)
         try:
             light = int(sbh.luminance(BH1750.ONCE_HIRES_1))
-            print(send_data_post("ligh1",light), str(light))
+            print(sender.send_form_data("ligh1",light), str(light))
         except:
             pass
 
@@ -166,7 +167,7 @@ def timerSend():
 
     if (it == 6*minute): # 6 = 1min / 60 = 10min
         if Debug: print("10 min. > send data:")
-        send_data() # read sensors and send data
+        _thread.start_new_thread(send_data, ()) # read sensors and send data
         it = 0 
 
 
@@ -256,10 +257,11 @@ def button3Action():
 
 # --------------------------------
 printLog(2,"init/env.setup >")
-from hydroponics.config import load_config, load_url_config, print_config, load_env_setup, print_env_setup
+
+from hydroponics.config import print_config, load_env_setup, print_env_setup
 # extern config edit: ctr+c -> config.setup()
 from config import Config
-keys = ["startlight","stoplight","lightintensity","pumpnodes","pumpduration","timeinterval"]
+keys = ["startlight","stoplight","lightintensity","pumpnodes","pumpduration","timeinterval", "urlpost", "place"]
 config = Config("garden", keys)
 
 # test
@@ -348,7 +350,7 @@ if ios.get("light"):
 
 # --------------------------------
 check_point(3,"device config")
-cf = load_config() # from file
+cf = config.config
 print_config(cf)
 print("device new config: ctrl+c > config.setup()")
 
@@ -386,20 +388,24 @@ except:
     oled.draw_icon(ICON_clr, 88 ,0)
     displMessage("Err.w_connect")
 
+"""
 uc = load_url_config() # from "web"
 try:
     print(uc["version"]) # print(uc["pumpnodes"][1])
     print_config(uc)
 except:
     print("Err.url_config")
+"""
 
+check_point(6,"Loading sender object.")
+sender = SendHydroponicsData(config)
 
-printLog(6,"start main loop >")
+check_point(7,"start main loop >")
 displMessage("")
 timer_init()
 getFree(True)
 
-print(send_data_post("pg2_ver",int(ver*100)))
+print(sender.send_form_data("pg2_ver",int(ver*100)))
 sleep(2)
 send_data() # firts test send data
 
