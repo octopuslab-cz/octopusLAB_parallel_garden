@@ -394,7 +394,7 @@ try:
     oled.text("wifi",99, 1)
     oled.draw_icon(ICON_clr, 88 ,0)
     oled.draw_icon(ICON_wifi, 88 ,0) 
-    cw = w()
+    wifi = w()
     time_init()
     timeDisplay()
 except:
@@ -426,7 +426,7 @@ send_data() # firts test send data
 # ============================= main loop ==========================
 while True:
     try:
-        # wifi.handle_wifi()
+        wifi.handle_wifi()
         sensorsDisplay()
         runAction()
         timeDisplay()
