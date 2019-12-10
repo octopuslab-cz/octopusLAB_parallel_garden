@@ -24,10 +24,10 @@ from urandom import randint
 from machine import Pin, UART, RTC, Timer
 from util.pinout import set_pinout
 from util.octopus import getFree, map, printLog, printTitle, i2c_init, oled_init, time_init, getVer, get_hhmm, w
-from hydroponics.send_data import SendHydroponicsData
+from hydroponics.hydroponic_database import HydroponicsDatabase
 import _thread
 
-ver = 0.55 # int(*100) > db
+ver = 0.56 # int(*100) > db
 # last update 3.11.2019 
 getFree(True)
 
@@ -142,12 +142,12 @@ def check_point(num, mess):
 def send_data():
     if ts:
         temp = int(ts.get_temp()*10)
-        print(sender.send_form_data("temp",temp), str(temp))
+        print(sender.write(temp=temp), str(temp))
         sleep(1)
 
     if ios.get("mois"):
         mois1 = get_moisture()
-        print(sender.send_form_data("mois1",mois1), str(mois1))
+        print(sender.write(mois1=mois1), str(mois1))
         sleep(1)
 
     if sbh:
@@ -155,7 +155,7 @@ def send_data():
         sleep(1)
         try:
             light = int(sbh.luminance(BH1750.ONCE_HIRES_1))
-            print(sender.send_form_data("ligh1",light), str(light))
+            print(sender.write(ligh1=light), str(light))
         except:
             pass
 
@@ -426,14 +426,14 @@ except:
 """
 
 check_point(6,"Loading sender object.")
-sender = SendHydroponicsData(config)
+sender = HydroponicsDatabase(config)
 
 check_point(7,"start main loop >")
 displMessage("")
 timer_init()
 getFree(True)
 
-print(sender.send_form_data("pg2_ver",int(ver*100)))
+print(sender.write(pg2_ver=int(ver*100)))
 sleep(2)
 send_data() # firts test send data
 
