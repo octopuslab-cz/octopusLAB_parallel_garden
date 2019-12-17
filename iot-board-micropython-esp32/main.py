@@ -258,8 +258,6 @@ def button3Action():
 # --------------------------------
 printLog(2,"init/env.setup >")
 
-# Deprecated, do not use
-#from hydroponics.config import load_env_setup, print_env_setup
 # extern config edit: ctr+c -> config.setup()
 from config import Config
 garden_keys = ["startlight", "stoplight", "lightintensity", "pumpnodes", "pumpduration", "timeinterval", "urlpost", "place"]
