@@ -28,7 +28,7 @@ from hydroponics.hydroponic_database import HydroponicsDatabase
 import _thread
 
 ver = 0.56 # int(*100) > db
-# last update 3.11.2019 
+# last update 3.11.2019
 getFree(True)
 
 # --------------------------------
