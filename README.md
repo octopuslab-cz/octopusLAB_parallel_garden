@@ -1,7 +1,7 @@
 # octopusLAB_parallel_garden
-parallel garden project - IoT and hydroponics monitoring
+Parallel garden project - IoT and hydroponics monitoring
 
-with #IoTboart (octopusLAB)
+with #IoTboard (octopusLAB)
 ---
 ![main1](./images/hydroponie-beta1902-dark.png )
 
